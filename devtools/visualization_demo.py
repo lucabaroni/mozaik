@@ -26,7 +26,7 @@ def experiment_default_parameters():
 
 def base_stim_default_parameters():
     return {
-        "frame_duration": 1,
+        "frame_duration": 10,
         "duration": 200,
         "trial": 1,
         "direct_stimulation_name": "simulation_name",
@@ -54,6 +54,7 @@ def ContinuousGaborMovementAndJump_default_parameters():
     d.update(
         {
             "orientation": 0,
+            "sigma":1,
             "phase": 0,
             "spatial_frequency": 1,
             "size": 2,
@@ -74,7 +75,7 @@ def ContinuousGaborMovementAndJump_default_parameters():
 def SparseNoise_default_parameters():
     d = visual_stim_default_parameters()
     d.update(
-        {"experiment_seed": 0, "time_per_image": 20, "grid_size": 11, "grid": True}
+        {"experiment_seed": 0, "time_per_image": 20, "blank_time": 20, "grid_size": 11, "grid": True}
     )
     return d
 

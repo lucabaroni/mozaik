@@ -9,6 +9,7 @@ from mozaik.sheets.direct_stimulator import Depolarization
 from collections import OrderedDict
 
 
+import os
 
 logger = mozaik.getMozaikLogger()
 
@@ -33,7 +34,88 @@ class VisualExperiment(Experiment):
         #JAHACK: This is kind of a hack now. There needs to be generally defined interface of what is the spatial and temporal resolution of a visual input layer
         # possibly in the future we could force the visual_space to have resolution, perhaps something like native_resolution parameter!?
         self.density  = 1/self.model.input_layer.parameters.receptive_field.spatial_resolution # in pixels per degree of visual space 
-	self.frame_duration = self.model.input_space.parameters.update_interval # in pixels per degree of visual space 
+        self.frame_duration = self.model.input_space.parameters.update_interval # in pixels per degree of visual space 
+
+
+class MeasureNaturalImages(VisualExperiment):
+    """
+    TODO update this
+    """
+    required_parameters = ParameterSet({
+            'images_folder' : str,
+            'number_of_images' : int,
+            'time_per_image' : float,
+            'num_trials' : int,
+    })  
+    def __init__(self,model,parameters):
+        VisualExperiment.__init__(self, model,parameters)
+
+        for k in xrange(0, self.parameters.num_trials):
+
+            img_paths = os.listdir(self.parameters.images_folder)
+            img_paths = img_paths[:self.parameters.number_of_images]
+            numpy.random.shuffle(img_paths)
+
+            for image_name in img_paths:
+                image_location = os.path.join(self.parameters.images_folder, image_name)
+                self.stimuli.append(
+                    topo.NaturalImage(
+                                frame_duration=self.frame_duration,
+                                image_location=image_location,
+                                duration=self.parameters.time_per_image,
+                                size_x=model.visual_field.size_x,
+                                size_y=model.visual_field.size_y,
+                                location_x=0.0,
+                                location_y=0.0,
+                                background_luminance=self.background_luminance,
+                                density=self.density,
+                                trial=k,
+                                size=60,  # x size of image
+                                ))
+
+    def do_analysis(self, data_store):
+        pass
+
+class MeasureNaturalImagesSequence(VisualExperiment):
+    """
+    TODO update this
+    """
+    
+    required_parameters = ParameterSet({
+            'images_folder' : str,
+            'number_of_images' : int,
+            'time_per_image' : float,
+            'time_per_blank' : float,
+            'num_trials' : int,
+    })  
+
+    def __init__(self,model,parameters):
+        VisualExperiment.__init__(self, model,parameters)
+        
+        stimulus_duration = self.parameters.number_of_images*(self.parameters.time_per_image + self.parameters.time_per_blank)
+        
+        for k in xrange(0, self.parameters.num_trials):
+            self.stimuli.append(
+                topo.NaturalImagesSequence(
+                            frame_duration=self.frame_duration,
+                            images_folder=self.parameters.images_folder,
+                            number_of_images=self.parameters.number_of_images,
+                            time_per_image=self.parameters.time_per_image,
+                            time_per_blank=self.parameters.time_per_blank,
+                            experiment_seed=500+k,
+                            duration = stimulus_duration,
+                            size_x=model.visual_field.size_x,
+                            size_y=model.visual_field.size_y,
+                            location_x=0.0,
+                            location_y=0.0,
+                            background_luminance=self.background_luminance,
+                            density=self.density,
+                            trial=k,
+                            size=60,  # x size of image
+                            ))
+
+    def do_analysis(self, data_store):
+        pass
 
 class MeasureFlatLuminanceSensitivity(VisualExperiment):
     """
@@ -76,7 +158,7 @@ class MeasureFlatLuminanceSensitivity(VisualExperiment):
         for l in self.parameters.luminances:
             for k in xrange(0, self.parameters.num_trials):
                 self.stimuli.append( topo.Null(
-		    frame_duration = self.frame_duration,
+                    frame_duration = self.frame_duration,
                     size_x=model.visual_field.size_x,
                     size_y=model.visual_field.size_y,
                     location_x=0.0,
@@ -323,7 +405,7 @@ class MeasureDense(VisualExperiment):
 
         for k in xrange(0, self.parameters.num_trials):
             self.stimuli.append(topo.DenseNoise(
-			    frame_duration = self.frame_duration,
+                            frame_duration = self.frame_duration,
                             time_per_image = self.parameters.time_per_image,
                             duration = self.parameters.total_number_of_images * self.parameters.time_per_image, 
                             size_x=model.visual_field.size_x,
@@ -390,7 +472,7 @@ class MeasureOrientationTuningFullfield(VisualExperiment):
             for i in xrange(0, self.parameters.num_orientations):
                 for k in xrange(0, self.parameters.num_trials):
                     self.stimuli.append(topo.FullfieldDriftingSinusoidalGrating(
-				    frame_duration = self.frame_duration,
+                                    frame_duration = self.frame_duration,
                                     size_x=model.visual_field.size_x,
                                     size_y=model.visual_field.size_y,
                                     location_x=0.0,
@@ -459,7 +541,7 @@ class MeasureOrientationTuningFullfieldA(VisualExperiment):
             for i in xrange(0, self.parameters.num_orientations):
                 for k in xrange(0, self.parameters.num_trials):
                     self.stimuli.append(topo.FullfieldDriftingSinusoidalGratingA(
-                    frame_duration = self.frame_duration,
+                                    frame_duration = self.frame_duration,
                                     size_x=model.visual_field.size_x,
                                     size_y=model.visual_field.size_y,
                                     offset_time=self.parameters.offset_time,
@@ -552,7 +634,7 @@ class MeasureSizeTuning(VisualExperiment):
             for s in sizes:
                 for k in xrange(0, self.parameters.num_trials):
                     self.stimuli.append(topo.DriftingSinusoidalGratingDisk(
-				    frame_duration = self.frame_duration,
+                                    frame_duration = self.frame_duration,
                                     size_x=model.visual_field.size_x,
                                     size_y=model.visual_field.size_y,
                                     location_x=0.0,
@@ -622,7 +704,7 @@ class MeasureContrastSensitivity(VisualExperiment):
         for c in self.parameters.contrasts:
             for k in xrange(0, self.parameters.num_trials):
                 self.stimuli.append(topo.FullfieldDriftingSinusoidalGrating(
-		    frame_duration = self.frame_duration,
+                    frame_duration = self.frame_duration,
                     size_x=model.visual_field.size_x,
                     size_y=model.visual_field.size_y,
                     location_x=0.0,
@@ -693,8 +775,8 @@ class MeasureContrastSensitivityA(VisualExperiment):
         # stimuli creation        
         for c in self.parameters.contrasts:
             for k in xrange(0, self.parameters.num_trials):
-                self.stimuli.append(topo.FullfieldDriftingSinusoidalGratingA(
-		    frame_duration = self.frame_duration,
+                    self.stimuli.append(topo.FullfieldDriftingSinusoidalGratingA(
+                    frame_duration = self.frame_duration,
                     size_x=model.visual_field.size_x,
                     size_y=model.visual_field.size_y,
                     location_x=0.0,
@@ -776,7 +858,7 @@ class MeasureFrequencySensitivity(VisualExperiment):
                     for k in xrange(0, self.parameters.num_trials):
                         if self.parameters.square:
                             self.stimuli.append(topo.FullfieldDriftingSquareGrating(
-				frame_duration = self.frame_duration,
+                                frame_duration = self.frame_duration,
                                 size_x=model.visual_field.size_x,
                                 size_y=model.visual_field.size_y,
                                 location_x=0.0,
@@ -791,7 +873,7 @@ class MeasureFrequencySensitivity(VisualExperiment):
                                 temporal_frequency=tf))
                         else:
                             self.stimuli.append(topo.FullfieldDriftingSinusoidalGrating(
-				frame_duration = self.frame_duration,
+                                frame_duration = self.frame_duration,
                                 size_x=model.visual_field.size_x,
                                 size_y=model.visual_field.size_y,
                                 location_x=0.0,
@@ -876,7 +958,7 @@ class MeasureOrientationContrastTuning(VisualExperiment):
                 for k in xrange(0, self.parameters.num_trials):
                     self.stimuli.append(
                         topo.DriftingSinusoidalGratingCenterSurroundStimulus(
-				    frame_duration = self.frame_duration,
+                                    frame_duration = self.frame_duration,
                                     size_x=model.visual_field.size_x,
                                     size_y=model.visual_field.size_y,
                                     location_x=0.0,
@@ -954,7 +1036,7 @@ class MeasureFeatureInducedCorrelation(VisualExperiment):
             for k in xrange(0, self.parameters.num_trials):
                 self.stimuli.append(
                     topo.FullfieldDriftingSquareGrating(
-			frame_duration = self.frame_duration,
+                        frame_duration = self.frame_duration,
                         size_x=model.visual_field.size_x,
                         size_y=model.visual_field.size_y,
                         location_x=0.0,
@@ -975,7 +1057,7 @@ class MeasureFeatureInducedCorrelation(VisualExperiment):
             for k in xrange(0, self.parameters.num_trials):
                 self.stimuli.append(
                     topo.FlashingSquares(
-			frame_duration = self.frame_duration,
+                        frame_duration = self.frame_duration,
                         size_x=model.visual_field.size_x,
                         size_y=model.visual_field.size_y,
                         location_x=0.0,
@@ -1038,7 +1120,7 @@ class MeasureNaturalImagesWithEyeMovement(VisualExperiment):
         for k in xrange(0, self.parameters.num_trials):
             self.stimuli.append(
                 topo.NaturalImageWithEyeMovement(
-			    frame_duration = self.frame_duration,
+                            frame_duration = self.frame_duration,
                             size_x=model.visual_field.size_x,
                             size_y=model.visual_field.size_y,
                             location_x=0.0,
@@ -1104,7 +1186,7 @@ class MeasureDriftingSineGratingWithEyeMovement(VisualExperiment):
         for k in xrange(0, self.parameters.num_trials):
             self.stimuli.append(
                 topo.DriftingGratingWithEyeMovement(
-			    frame_duration = self.frame_duration,
+                            frame_duration = self.frame_duration,
                             size_x=model.visual_field.size_x,
                             size_y=model.visual_field.size_y,
                             location_x=0.0,
@@ -1155,7 +1237,7 @@ class MeasureSpontaneousActivity(VisualExperiment):
             for k in xrange(0,self.parameters.num_trials):
                 self.stimuli.append(
                             topo.Null(   
-				frame_duration = self.frame_duration,
+                                frame_duration = self.frame_duration,
                                 size_x=model.visual_field.size_x,
                                 size_y=model.visual_field.size_y,
                                 location_x=0.0,
@@ -1242,7 +1324,7 @@ class MapPhaseResponseWithBarStimulus(VisualExperiment):
             for s in xrange(0, self.parameters.steps):
                 self.stimuli.append(
                     topo.FlashedBar(
-				                frame_duration = self.frame_duration,
+                                frame_duration = self.frame_duration,
                                 size_x=model.visual_field.size_x,
                                 size_y=model.visual_field.size_y,
                                 location_x=0.0,
@@ -1586,7 +1668,7 @@ class MeasureTextureSensitivityFullfield(VisualExperiment):
     })  
 
     def __init__(self,model,parameters):
-	# we place this import here to avoid the need for octave dependency unless this experiment is actually used.
+        # we place this import here to avoid the need for octave dependency unless this experiment is actually used.
         import mozaik.stimuli.vision.texture_based as textu #vf
         VisualExperiment.__init__(self, model,parameters)
         for image in self.parameters.images:
