@@ -19,6 +19,7 @@ from mozaik.tools.units import cpd
 from numpy import pi
 from quantities import Hz, rad, degrees, ms, dimensionless
 
+import os
 
 class TopographicaBasedVisualStimulus(VisualStimulus):
     """
@@ -29,6 +30,94 @@ class TopographicaBasedVisualStimulus(VisualStimulus):
         VisualStimulus.__init__(self,**params)
         self.transparent = False # We will not handle transparency anywhere here for now so let's make it fast
 
+
+class NaturalImage(TopographicaBasedVisualStimulus):
+    """
+    A visual stimulus consisting in a static image.
+    
+    """
+    size = SNumber(degrees, doc="The length of the longer axis of the image in visual degrees")
+    image_location = SString(doc="Location of the image")
+    duration = SNumber(ms, doc="Duration of the image display")
+    
+    def __init__(self,**params):
+        TopographicaBasedVisualStimulus.__init__(self, **params)
+        assert (self.duration/self.frame_duration) % 1.0 == 0.0, "The duration of image presentation should be multiple of frame duration."
+        
+    def frames(self):
+        self.pattern_sampler = imagen.image.PatternSampler(
+                                    size_normalization='fit_longest',
+                                    whole_pattern_output_fns=[MaximumDynamicRange()])
+
+        image = imagen.image.FileImage(         
+                                    filename=self.image_location,
+                                    x=0,
+                                    y=0,
+                                    orientation=0,
+                                    xdensity=self.density,
+                                    ydensity=self.density,
+                                    size=self.size,
+                                    bounds=BoundingBox(points=((-self.size_x/2, -self.size_y/2),
+                                                               (self.size_x/2, self.size_y/2))),
+                                    scale=2*self.background_luminance,
+                                    pattern_sampler=self.pattern_sampler)
+
+
+        for i in range(int(self.duration/self.frame_duration)):
+                yield (image(),[i])
+
+
+class NaturalImagesSequence(TopographicaBasedVisualStimulus):
+    """
+    TODO update this
+    """
+    size = SNumber(degrees, doc="The length of the longer axis of the image in visual degrees")
+    images_folder = SString(doc="Location of the image")
+    time_per_blank = SNumber(ms, doc="Duration of the blank display")
+    time_per_image =  SNumber(ms, doc="Duration of each image display")
+    number_of_images = SNumber(dimensionless, doc="lenght of the image sequence")
+    experiment_seed =  SNumber(dimensionless, doc="seed to randomize sequence")
+    
+    def __init__(self,**params):
+        TopographicaBasedVisualStimulus.__init__(self, **params)
+        assert (self.time_per_image/self.frame_duration) % 1.0 == 0.0, "The duration of image presentation should be multiple of frame duration."
+        assert (self.time_per_blank/self.frame_duration) % 1.0 == 0.0, "The duration of blank presentation should be multiple of frame duration."
+        
+    def frames(self):
+        
+        img_names = os.listdir(self.images_folder)
+        img_names = img_names[:self.number_of_images]
+        numpy.random.seed(self.experiment_seed)
+        numpy.random.shuffle(img_names)
+            
+        for img_name in img_names:
+            img_location = os.path(self.images_folder, img_name)
+            self.pattern_sampler = imagen.image.PatternSampler(
+                                        size_normalization='fit_longest',
+                                        whole_pattern_output_fns=[MaximumDynamicRange()])
+
+            img = imagen.image.FileImage(         
+                                        filename=img_location,
+                                        x=0,
+                                        y=0,
+                                        orientation=0,
+                                        xdensity=self.density,
+                                        ydensity=self.density,
+                                        size=self.size,
+                                        bounds=BoundingBox(points=((-self.size_x/2, -self.size_y/2),
+                                                                (self.size_x/2, self.size_y/2))),
+                                        scale=2*self.background_luminance,
+                                        pattern_sampler=self.pattern_sampler)
+            
+            image = img()
+            blank = image*0+self.background_luminance
+            for i in range(int(self.time_per_image/self.frame_duration)):
+                yield (image,[i])
+            for i in range(int(self.time_per_blank/self.frame_duration)):
+                yield (blank,[i])
+                
+                
+                
 class SparseNoise(TopographicaBasedVisualStimulus):
     """
     Sparse noise stimulus.
@@ -1178,6 +1267,10 @@ class ContinuousGaborMovementAndJump(GaborStimulus):
     center_flash_duration = SNumber(ms, doc="Duration of flashing the Gabor patch in the center.")
 
     def frames(self):
+        print(self.frame_duration)
+        print(self.sigma)
+        print(self.n_sigmas)
+        
         assert self.movement_duration >= 2*self.frame_duration, "Movement must be at least 2 frames long"
         assert self.center_flash_duration >= self.frame_duration, "Flash in center must be at least 1 frame long"
 

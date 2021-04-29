@@ -9,6 +9,7 @@ from mozaik.sheets.direct_stimulator import Depolarization
 from collections import OrderedDict
 
 
+import os
 
 logger = mozaik.getMozaikLogger()
 
@@ -34,6 +35,90 @@ class VisualExperiment(Experiment):
         # possibly in the future we could force the visual_space to have resolution, perhaps something like native_resolution parameter!?
         self.density  = 1/self.model.input_layer.parameters.receptive_field.spatial_resolution # in pixels per degree of visual space 
         self.frame_duration = self.model.input_space.parameters.update_interval # in pixels per degree of visual space 
+<<<<<<< HEAD
+=======
+
+
+class MeasureNaturalImages(VisualExperiment):
+    """
+    TODO update this
+    """
+    required_parameters = ParameterSet({
+            'images_folder' : str,
+            'number_of_images' : int,
+            'time_per_image' : float,
+            'num_trials' : int,
+    })  
+    def __init__(self,model,parameters):
+        VisualExperiment.__init__(self, model,parameters)
+
+        for k in xrange(0, self.parameters.num_trials):
+
+            img_paths = os.listdir(self.parameters.images_folder)
+            img_paths = img_paths[:self.parameters.number_of_images]
+            numpy.random.shuffle(img_paths)
+
+            for image_name in img_paths:
+                image_location = os.path.join(self.parameters.images_folder, image_name)
+                self.stimuli.append(
+                    topo.NaturalImage(
+                                frame_duration=self.frame_duration,
+                                image_location=image_location,
+                                duration=self.parameters.time_per_image,
+                                size_x=model.visual_field.size_x,
+                                size_y=model.visual_field.size_y,
+                                location_x=0.0,
+                                location_y=0.0,
+                                background_luminance=self.background_luminance,
+                                density=self.density,
+                                trial=k,
+                                size=60,  # x size of image
+                                ))
+
+    def do_analysis(self, data_store):
+        pass
+
+class MeasureNaturalImagesSequence(VisualExperiment):
+    """
+    TODO update this
+    """
+    
+    required_parameters = ParameterSet({
+            'images_folder' : str,
+            'number_of_images' : int,
+            'time_per_image' : float,
+            'time_per_blank' : float,
+            'num_trials' : int,
+    })  
+
+    def __init__(self,model,parameters):
+        VisualExperiment.__init__(self, model,parameters)
+        
+        stimulus_duration = self.parameters.number_of_images*(self.parameters.time_per_image + self.parameters.time_per_blank)
+        
+        for k in xrange(0, self.parameters.num_trials):
+            self.stimuli.append(
+                topo.NaturalImagesSequence(
+                            frame_duration=self.frame_duration,
+                            images_folder=self.parameters.images_folder,
+                            number_of_images=self.parameters.number_of_images,
+                            time_per_image=self.parameters.time_per_image,
+                            time_per_blank=self.parameters.time_per_blank,
+                            experiment_seed=500+k,
+                            duration = stimulus_duration,
+                            size_x=model.visual_field.size_x,
+                            size_y=model.visual_field.size_y,
+                            location_x=0.0,
+                            location_y=0.0,
+                            background_luminance=self.background_luminance,
+                            density=self.density,
+                            trial=k,
+                            size=60,  # x size of image
+                            ))
+
+    def do_analysis(self, data_store):
+        pass
+>>>>>>> Add Nat imgs stim and exp, fix small things in visualization demo
 
 class MeasureFlatLuminanceSensitivity(VisualExperiment):
     """
@@ -459,7 +544,7 @@ class MeasureOrientationTuningFullfieldA(VisualExperiment):
             for i in range(0, self.parameters.num_orientations):
                 for k in range(0, self.parameters.num_trials):
                     self.stimuli.append(topo.FullfieldDriftingSinusoidalGratingA(
-                    frame_duration = self.frame_duration,
+                                    frame_duration = self.frame_duration,
                                     size_x=model.visual_field.size_x,
                                     size_y=model.visual_field.size_y,
                                     offset_time=self.parameters.offset_time,
@@ -692,8 +777,13 @@ class MeasureContrastSensitivityA(VisualExperiment):
             
         # stimuli creation        
         for c in self.parameters.contrasts:
+<<<<<<< HEAD
             for k in range(0, self.parameters.num_trials):
                 self.stimuli.append(topo.FullfieldDriftingSinusoidalGratingA(
+=======
+            for k in xrange(0, self.parameters.num_trials):
+                    self.stimuli.append(topo.FullfieldDriftingSinusoidalGratingA(
+>>>>>>> Add Nat imgs stim and exp, fix small things in visualization demo
                     frame_duration = self.frame_duration,
                     size_x=model.visual_field.size_x,
                     size_y=model.visual_field.size_y,
@@ -1586,7 +1676,7 @@ class MeasureTextureSensitivityFullfield(VisualExperiment):
     })  
 
     def __init__(self,model,parameters):
-	# we place this import here to avoid the need for octave dependency unless this experiment is actually used.
+        # we place this import here to avoid the need for octave dependency unless this experiment is actually used.
         import mozaik.stimuli.vision.texture_based as textu #vf
         VisualExperiment.__init__(self, model,parameters)
         for image in self.parameters.images:
