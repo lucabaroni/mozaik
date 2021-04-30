@@ -10,6 +10,7 @@ from collections import OrderedDict
 
 
 import os
+import pickle
 
 logger = mozaik.getMozaikLogger()
 
@@ -78,43 +79,63 @@ class MeasureNaturalImages(VisualExperiment):
     def do_analysis(self, data_store):
         pass
 
-class MeasureNaturalImagesSequence(VisualExperiment):
+class MeasureImagesSequence(VisualExperiment):
     """
     TODO update this
     """
     
     required_parameters = ParameterSet({
             'images_folder' : str,
-            'number_of_images' : int,
+            'num_images' : int,
+            'num_images_per_stimulus': int,
             'time_per_image' : float,
             'time_per_blank' : float,
             'num_trials' : int,
+            'num_skipped_images' : int,
+            'size' : float
     })  
 
     def __init__(self,model,parameters):
         VisualExperiment.__init__(self, model,parameters)
         
-        stimulus_duration = self.parameters.number_of_images*(self.parameters.time_per_image + self.parameters.time_per_blank)
+        #create stimulus files
+        if not os.path.exists("./ImagesStimuli"):
+            os.makedirs("./ImagesStimuli")
+        imgs_locations = [os.path.join(self.parameters.images_folder, f) for f in os.listdir(self.parameters.images_folder)]
+        imgs_locations.sort()
+        imgs_locations = imgs_locations[self.parameters.num_skipped_images : self.parameters.num_skipped_images + self.parameters.num_images]
+        num_stimuli = int(numpy.ceil(self.parameters.num_images/self.parameters.num_images_per_stimulus))
+        ips = self.parameters.num_images_per_stimulus
+        for k in xrange(0, self.parameters.num_trials):
+            for i in xrange(0, num_stimuli):
+                stimulus_img_locations = imgs_locations[i*ips:(i+1)*ips]
+                filename = "./ImagesStimuli/trial_" + str(k) + "_stimulus_" + str(i) + ".pickle"
+                with open(filename, 'wb') as f:
+                    pickle.dump(stimulus_img_locations,f)
+    
+            numpy.random.shuffle(imgs_locations) 
+        stimulus_duration = self.parameters.num_images_per_stimulus*(self.parameters.time_per_image + self.parameters.time_per_blank)
+        idxs = numpy.arange(self.parameters.num_images, step=self.parameters.num_images_per_stimulus)
         
         for k in xrange(0, self.parameters.num_trials):
-            self.stimuli.append(
-                topo.NaturalImagesSequence(
-                            frame_duration=self.frame_duration,
-                            images_folder=self.parameters.images_folder,
-                            number_of_images=self.parameters.number_of_images,
-                            time_per_image=self.parameters.time_per_image,
-                            time_per_blank=self.parameters.time_per_blank,
-                            experiment_seed=500+k,
-                            duration = stimulus_duration,
-                            size_x=model.visual_field.size_x,
-                            size_y=model.visual_field.size_y,
-                            location_x=0.0,
-                            location_y=0.0,
-                            background_luminance=self.background_luminance,
-                            density=self.density,
-                            trial=k,
-                            size=60,  # x size of image
-                            ))
+            for i in xrange(0, num_stimuli):
+                filename = "./ImagesStimuli/trial_" + str(k) + "_stimulus_" + str(i) + ".pickle"
+                self.stimuli.append(
+                    topo.ImagesSequence(
+                                frame_duration=self.frame_duration,
+                                images_locations_file=filename,
+                                time_per_image=self.parameters.time_per_image,
+                                time_per_blank=self.parameters.time_per_blank,
+                                duration = stimulus_duration,
+                                size_x=model.visual_field.size_x,
+                                size_y=model.visual_field.size_y,
+                                location_x=0.0,
+                                location_y=0.0,
+                                background_luminance=self.background_luminance,
+                                density=self.density,
+                                trial=k,
+                                size=self.parameters.size,  # x size of image
+                                ))
 
     def do_analysis(self, data_store):
         pass
