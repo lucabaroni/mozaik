@@ -67,16 +67,14 @@ class NaturalImage(TopographicaBasedVisualStimulus):
                 yield (image(),[i])
 
 
-class NaturalImagesSequence(TopographicaBasedVisualStimulus):
+class ImagesSequence(TopographicaBasedVisualStimulus):
     """
     TODO update this
     """
     size = SNumber(degrees, doc="The length of the longer axis of the image in visual degrees")
-    images_folder = SString(doc="Location of the image")
+    images_locations_file = SString(doc="path to file containing the list of images locations")
     time_per_blank = SNumber(ms, doc="Duration of the blank display")
     time_per_image =  SNumber(ms, doc="Duration of each image display")
-    number_of_images = SNumber(dimensionless, doc="lenght of the image sequence")
-    experiment_seed =  SNumber(dimensionless, doc="seed to randomize sequence")
     
     def __init__(self,**params):
         TopographicaBasedVisualStimulus.__init__(self, **params)
@@ -85,13 +83,10 @@ class NaturalImagesSequence(TopographicaBasedVisualStimulus):
         
     def frames(self):
         
-        img_names = os.listdir(self.images_folder)
-        img_names = img_names[:self.number_of_images]
-        numpy.random.seed(self.experiment_seed)
-        numpy.random.shuffle(img_names)
+        with open(self.images_locations_file, 'rb') as f:
+            images_locations = pickle.load(f)
             
-        for img_name in img_names:
-            img_location = os.path(self.images_folder, img_name)
+        for img_location in images_locations:
             self.pattern_sampler = imagen.image.PatternSampler(
                                         size_normalization='fit_longest',
                                         whole_pattern_output_fns=[MaximumDynamicRange()])
@@ -114,10 +109,10 @@ class NaturalImagesSequence(TopographicaBasedVisualStimulus):
             for i in range(int(self.time_per_image/self.frame_duration)):
                 yield (image,[i])
             for i in range(int(self.time_per_blank/self.frame_duration)):
-                yield (blank,[i])
+                yield (blank,[i])             
                 
-                
-                
+
+
 class SparseNoise(TopographicaBasedVisualStimulus):
     """
     Sparse noise stimulus.
