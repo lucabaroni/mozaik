@@ -8,7 +8,6 @@ from mozaik.tools.distribution_parametrization import ParameterWithUnitsAndPerio
 from mozaik.sheets.direct_stimulator import Depolarization
 from collections import OrderedDict
 
-
 import os
 import pickle
 
@@ -95,29 +94,21 @@ class MeasureImagesSequence(VisualExperiment):
 
     def __init__(self,model,parameters):
         VisualExperiment.__init__(self, model,parameters)
-        
-        #create stimulus files
-        if not os.path.exists("./ImagesStimuli"):
-            os.makedirs("./ImagesStimuli")
+        stimulus_duration = self.parameters.num_images_per_stimulus*(self.parameters.time_per_image + self.parameters.time_per_blank)
+        stim_dir = os.path.join(mozaik.controller.Global.root_directory ,"ImagesStimuli")
+        if not os.path.exists(stim_dir):
+            os.makedirs(stim_dir)
         imgs_locations = [os.path.join(self.parameters.images_folder, f) for f in os.listdir(self.parameters.images_folder)]
         imgs_locations.sort()
         imgs_locations = imgs_locations[self.parameters.num_skipped_images : self.parameters.num_skipped_images + self.parameters.num_images]
         num_stimuli = int(numpy.ceil(self.parameters.num_images/self.parameters.num_images_per_stimulus))
         ips = self.parameters.num_images_per_stimulus
-        for k in xrange(0, self.parameters.num_trials):
-            for i in xrange(0, num_stimuli):
+        for k in range(0, self.parameters.num_trials):
+            for i in range(0, num_stimuli):
                 stimulus_img_locations = imgs_locations[i*ips:(i+1)*ips]
-                filename = "./ImagesStimuli/trial_" + str(k) + "_stimulus_" + str(i) + ".pickle"
+                filename = os.path.join(stim_dir, "trial_" + str(k) + "_stimulus_" + str(i) + ".pickle")
                 with open(filename, 'wb') as f:
                     pickle.dump(stimulus_img_locations,f)
-    
-            numpy.random.shuffle(imgs_locations) 
-        stimulus_duration = self.parameters.num_images_per_stimulus*(self.parameters.time_per_image + self.parameters.time_per_blank)
-        idxs = numpy.arange(self.parameters.num_images, step=self.parameters.num_images_per_stimulus)
-        
-        for k in xrange(0, self.parameters.num_trials):
-            for i in xrange(0, num_stimuli):
-                filename = "./ImagesStimuli/trial_" + str(k) + "_stimulus_" + str(i) + ".pickle"
                 self.stimuli.append(
                     topo.ImagesSequence(
                                 frame_duration=self.frame_duration,
@@ -132,8 +123,11 @@ class MeasureImagesSequence(VisualExperiment):
                                 background_luminance=self.background_luminance,
                                 density=self.density,
                                 trial=k,
-                                size=self.parameters.size,  # x size of image
+                                size=self.parameters.size, 
                                 ))
+                
+            numpy.random.shuffle(imgs_locations) 
+                
 
     def do_analysis(self, data_store):
         pass
