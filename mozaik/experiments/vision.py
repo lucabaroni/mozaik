@@ -36,8 +36,6 @@ class VisualExperiment(Experiment):
         # possibly in the future we could force the visual_space to have resolution, perhaps something like native_resolution parameter!?
         self.density  = 1/self.model.input_layer.parameters.receptive_field.spatial_resolution # in pixels per degree of visual space 
         self.frame_duration = self.model.input_space.parameters.update_interval # in pixels per degree of visual space 
-<<<<<<< HEAD
-=======
 
 
 class MeasureNaturalImages(VisualExperiment):
@@ -130,9 +128,9 @@ class MeasureImagesSequence(VisualExperiment):
                                 ))
                 
             numpy.random.shuffle(imgs_locations) 
+            
     def do_analysis(self, data_store):
         pass
->>>>>>> Add Nat imgs stim and exp, fix small things in visualization demo
 
 class MeasureFlatLuminanceSensitivity(VisualExperiment):
     """
@@ -791,13 +789,8 @@ class MeasureContrastSensitivityA(VisualExperiment):
             
         # stimuli creation        
         for c in self.parameters.contrasts:
-<<<<<<< HEAD
             for k in range(0, self.parameters.num_trials):
                 self.stimuli.append(topo.FullfieldDriftingSinusoidalGratingA(
-=======
-            for k in xrange(0, self.parameters.num_trials):
-                    self.stimuli.append(topo.FullfieldDriftingSinusoidalGratingA(
->>>>>>> Add Nat imgs stim and exp, fix small things in visualization demo
                     frame_duration = self.frame_duration,
                     size_x=model.visual_field.size_x,
                     size_y=model.visual_field.size_y,
