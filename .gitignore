@@ -7,3 +7,5 @@ build
 cover
 .coverage
 ImagesStimuli/
+.vsode
+.gitignore
