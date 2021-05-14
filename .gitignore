@@ -6,4 +6,4 @@ build
 *.komodoproject
 cover
 .coverage
-.vsode
+.vscode/
