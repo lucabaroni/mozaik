@@ -48,14 +48,14 @@ def visual_stim_default_parameters():
     )
     return d
 
+
 def NaturalImage_stim_default_parameters():
     d = visual_stim_default_parameters()
     d.update(
         {
-            "size" : 20.307,
-            "image_location" : "/home/luca/Hillier/images/BBC_life_of_animals/image_1001.tif",
-            "duration" : 100,
-            
+            "size": 20.307,
+            "image_location": "/home/luca/Hillier/images/BBC_life_of_animals/image_1001.tif",
+            "duration": 100,
         }
     )
     return d
@@ -68,29 +68,29 @@ def ImagesSequence_stim_default_parameters():
     time_per_blank = 100
     d.update(
         {
-            "size" : 20.307,
-            "images_folder" : "/home/luca/Hillier/images/BBC_life_of_animals/",
-            "number_of_images" : 5,
-            "time_per_image" : time_per_image,
-            "time_per_blank" : time_per_blank,
-            "experiment_seed" : 500,
-            "duration" : number_of_images*(time_per_image+time_per_blank),
+            "size": 20.307,
+            "images_folder": "/home/luca/Hillier/images/BBC_life_of_animals/",
+            "number_of_images": 5,
+            "time_per_image": time_per_image,
+            "time_per_blank": time_per_blank,
+            "experiment_seed": 500,
+            "duration": number_of_images * (time_per_image + time_per_blank),
         }
     )
     return d
 
 
 def IS_exp_default_parameters():
-    d = {   
-            "images_folder" : "/home/luca/Hillier/images/BBC_life_of_animals/",
-            "num_images" : 20,
-            "num_images_per_stimulus": 10,
-            "num_trials" : 1,
-            "num_skipped_images" : 1,
-            "size" : 20.307,
-            "time_per_image" : 100,
-            "time_per_blank" : 100,
-        }
+    d = {
+        "images_folder": "/home/luca/Hillier/images/BBC_life_of_animals/",
+        "num_images": 20,
+        "num_images_per_stimulus": 10,
+        "num_trials": 1,
+        "num_skipped_images": 1,
+        "size": 20.307,
+        "time_per_image": 100,
+        "time_per_blank": 100,
+    }
     return d
 
 
@@ -99,7 +99,7 @@ def ContinuousGaborMovementAndJump_default_parameters():
     d.update(
         {
             "orientation": 0,
-            "sigma":1,
+            "sigma": 1,
             "phase": 0,
             "spatial_frequency": 1,
             "size": 2,
@@ -120,7 +120,13 @@ def ContinuousGaborMovementAndJump_default_parameters():
 def SparseNoise_default_parameters():
     d = visual_stim_default_parameters()
     d.update(
-        {"experiment_seed": 0, "time_per_image": 20, "blank_time": 20, "grid_size": 11, "grid": True}
+        {
+            "experiment_seed": 0,
+            "time_per_image": 20,
+            "blank_time": 20,
+            "grid_size": 11,
+            "grid": True,
+        }
     )
     return d
 
@@ -183,15 +189,18 @@ def demo_show_frame():
     viz.show_frame(frames[0], params=params, grid=True)
     viz.show_frames(frames)
 
+
 def demo_stimulus_NaturalImage():
     params = NaturalImage_stim_default_parameters()
     stim = topo.NaturalImage(**params)
     viz.show_stimulus(stim)
 
+
 def demo_stimulus_NaturalImagesSequence():
     params = NaturalImagesSequence_stim_default_parameters()
     stim = topo.NaturalImagesSequence(**params)
     viz.show_stimulus(stim)
+
 
 def demo_stimulus_0():
     params = ContinuousGaborMovementAndJump_default_parameters()
@@ -260,13 +269,13 @@ def demo_experiment_ImagesSequence():
     experiment = exp.MeasureImagesSequence(model=model, parameters=parameters)
     viz.show_experiment(experiment, merge_stimuli=False, grid=None)
 
+
 def main():
 
     if True:
         # Try out show_stimulus arguments
-       
-       
-          demo_experiment_ImagesSequence()
+
+        demo_experiment_ImagesSequence()
     #     demo_stimulus_1()
     #     demo_stimulus_0_duration()
     #     demo_stimulus_0_grid()

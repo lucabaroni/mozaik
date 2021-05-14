@@ -1,0 +1,859 @@
+{
+  "input_space_type": "mozaik.space.VisualSpace",
+  "input_space": {
+    "update_interval": 7.0,
+    "background_luminance": 50.0,
+  },
+  "visual_field": {
+    "centre": (0.0, 0.0),
+    "size": (11.0, 11.0),
+  },
+  "sheets": {
+    "l4_cortex_exc": {
+      "component": "mozaik.sheets.vision.VisualCorticalUniformSheet",
+      "params": {
+        "name": "V1_Exc_L4",
+        "sx": 4000.0,
+        "sy": 4000.0,
+        "density": 1500.0,
+        "mpi_safe": False,
+        "magnification_factor": 1000.0,
+        "cell": {
+          "model": "EIF_cond_exp_isfa_ista",
+          "params": {
+            "v_rest": -70,
+            "v_reset": -55.0,
+            "tau_refrac": 2.0,
+            "tau_m": 17.0,
+            "cm": 0.06,
+            "e_rev_E": 0.0,
+            "e_rev_I": -80.0,
+            "tau_syn_E": 7.0,
+            "tau_syn_I": 11.0,
+            "a": -0.8,
+            "b": 0.08,
+            "delta_T": 0.8,
+            "tau_w": 88.0,
+            "v_thresh": -53.0,
+          },
+          "initial_values": {
+            "v": PyNNDistribution(name='uniform',low=-70,high=-51),
+          },
+        },
+        "artificial_stimulators": {
+
+        },
+        "recording_interval": 1.0,
+        "recorders": {
+          "2": {
+            "component": "mozaik.sheets.population_selector.SimilarAnnotationSelectorRegion",
+            "variables": ('spikes', 'v', 'gsyn_exc', 'gsyn_inh'),
+            "params": {
+              "size": 200.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+              "num_of_cells": 100,
+              "annotation": "LGNAfferentOrientation",
+              "distance": 0.2,
+              "value": 0.0,
+              "period": 3.14159265359,
+            },
+          },
+          "3": {
+            "component": "mozaik.sheets.population_selector.RCGrid",
+            "variables": "spikes",
+            "params": {
+              "size": 600.0,
+              "spacing": 20.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+            },
+          },
+          "4": {
+            "component": "mozaik.sheets.population_selector.RCGrid",
+            "variables": "spikes",
+            "params": {
+              "size": 2000.0,
+              "spacing": 100.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+            },
+          },
+        },
+      },
+      "K": 1000,
+      "layer23_aff_ratio": 0.2,
+      "inhibitory_connection_ratio": 0.7,
+      "L4ExcL4ExcConnection": {
+        "target_synapses": "excitatory",
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 30,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.vision.V1CorrelationBasedConnectivity",
+            "params": {
+              "sigma": 1.4,
+              "target_synapses": "excitatory",
+            },
+          },
+          "f2": {
+            "component": "mozaik.connectors.modular_connector_functions.HyperbolicModularConnectorFunction",
+            "params": {
+              "theta": 207.76,
+              "alpha": 0.013944,
+            },
+          },
+        },
+        "delay_functions": {
+          "d1": {
+            "component": "mozaik.connectors.modular_connector_functions.LinearModularConnectorFunction",
+            "params": {
+              "constant_scaler": 1.4,
+              "linear_scaler": 0.0033333333,
+            },
+          },
+        },
+        "weight_expression": "f1*f2",
+        "delay_expression": "d1",
+        "base_weight": 0.0005,
+        "annotation_reference_name": "aff_samples",
+        "num_samples": 640.0,
+      },
+      "L4ExcL4InhConnection": {
+        "target_synapses": "excitatory",
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 30,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.vision.V1CorrelationBasedConnectivity",
+            "params": {
+              "sigma": 1.4,
+              "target_synapses": "excitatory",
+            },
+          },
+          "f2": {
+            "component": "mozaik.connectors.modular_connector_functions.HyperbolicModularConnectorFunction",
+            "params": {
+              "theta": 191.84,
+              "alpha": 0.014827,
+            },
+          },
+        },
+        "delay_functions": {
+          "d1": {
+            "component": "mozaik.connectors.modular_connector_functions.LinearModularConnectorFunction",
+            "params": {
+              "constant_scaler": 0.5,
+              "linear_scaler": 0.0033333333,
+            },
+          },
+        },
+        "weight_expression": "f1*f2",
+        "delay_expression": "d1",
+        "base_weight": 0.0009,
+        "annotation_reference_name": "aff_samples",
+        "num_samples": 448.0,
+      },
+      "AfferentConnection": {
+        "aspect_ratio": 0.4,
+        "size": 0.17,
+        "orientation_preference": PyNNDistribution(name='uniform',low=0,high=3.141592653589793),
+        "phase": PyNNDistribution(name='uniform',low=0,high=6.283185307179586),
+        "frequency": 0.8,
+        "delay_expression": "f1",
+        "delay_functions": {
+          "f1": {
+            "component": "mozaik.connectors.modular_connector_functions.PyNNDistributionConnectorFunction",
+            "params": {
+              "pynn_distribution": PyNNDistribution(name='uniform',low=1.4,high=2.4),
+            },
+          },
+        },
+        "topological": True,
+        "or_map": True,
+        "or_map_location": "./or_map_new_6x6",
+        "phase_map": False,
+        "phase_map_location": "./phase_map",
+        "rf_jitter": 0,
+        "off_bias": 1.0,
+        "base_weight": 0.0016,
+        "num_samples": PyNNDistribution(name='uniform',low=55,high=55),
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 500.0,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+      },
+    },
+    "l4_cortex_inh": {
+      "component": "mozaik.sheets.vision.VisualCorticalUniformSheet",
+      "params": {
+        "name": "V1_Inh_L4",
+        "sx": 4000.0,
+        "sy": 4000.0,
+        "density": 375.0,
+        "mpi_safe": False,
+        "magnification_factor": 1000.0,
+        "cell": {
+          "model": "EIF_cond_exp_isfa_ista",
+          "params": {
+            "v_thresh": -53.0,
+            "v_rest": -70,
+            "v_reset": -55.0,
+            "tau_refrac": 0.5,
+            "tau_m": 10.0,
+            "cm": 0.04,
+            "e_rev_E": 0.0,
+            "e_rev_I": -80.0,
+            "tau_syn_E": 7.0,
+            "tau_syn_I": 11.0,
+            "a": -0.8,
+            "b": 0.08,
+            "delta_T": 0.8,
+            "tau_w": 88.0,
+          },
+          "initial_values": {
+            "v": PyNNDistribution(name='uniform',low=-70,high=-51),
+          },
+        },
+        "artificial_stimulators": {
+
+        },
+        "recording_interval": 1.0,
+        "recorders": {
+          "2": {
+            "component": "mozaik.sheets.population_selector.RCGrid",
+            "variables": ('spikes', 'v', 'gsyn_exc', 'gsyn_inh'),
+            "params": {
+              "size": 200.0,
+              "spacing": 20.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+            },
+          },
+          "3": {
+            "component": "mozaik.sheets.population_selector.RCGrid",
+            "variables": "spikes",
+            "params": {
+              "size": 600.0,
+              "spacing": 20.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+            },
+          },
+        },
+      },
+      "L4InhL4ExcConnection": {
+        "target_synapses": "inhibitory",
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 30,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.vision.V1CorrelationBasedConnectivity",
+            "params": {
+              "sigma": 1.4,
+              "target_synapses": "inhibitory",
+            },
+          },
+          "f2": {
+            "component": "mozaik.connectors.modular_connector_functions.HyperbolicModularConnectorFunction",
+            "params": {
+              "theta": 237.54,
+              "alpha": 0.012614,
+            },
+          },
+        },
+        "delay_functions": {
+          "d1": {
+            "component": "mozaik.connectors.modular_connector_functions.LinearModularConnectorFunction",
+            "params": {
+              "constant_scaler": 1.0,
+              "linear_scaler": 0.0033333333,
+            },
+          },
+        },
+        "weight_expression": "f1*f2",
+        "delay_expression": "d1",
+        "base_weight": 0.0023,
+        "num_samples": 200.0,
+      },
+      "L4InhL4InhConnection": {
+        "target_synapses": "inhibitory",
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 30,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.vision.V1CorrelationBasedConnectivity",
+            "params": {
+              "sigma": 1.4,
+              "target_synapses": "inhibitory",
+            },
+          },
+          "f2": {
+            "component": "mozaik.connectors.modular_connector_functions.HyperbolicModularConnectorFunction",
+            "params": {
+              "theta": 256.43,
+              "alpha": 0.011907,
+            },
+          },
+        },
+        "delay_functions": {
+          "d1": {
+            "component": "mozaik.connectors.modular_connector_functions.LinearModularConnectorFunction",
+            "params": {
+              "constant_scaler": 1.0,
+              "linear_scaler": 0.0033333333,
+            },
+          },
+        },
+        "weight_expression": "f1*f2",
+        "delay_expression": "d1",
+        "base_weight": 0.0023,
+        "num_samples": 140.0,
+      },
+      "ExcInhAfferentRatio": 1.0,
+      "AfferentConnection": {
+        "aspect_ratio": 0.4,
+        "size": 0.17,
+        "orientation_preference": PyNNDistribution(name='uniform',low=0,high=3.141592653589793),
+        "phase": PyNNDistribution(name='uniform',low=0,high=6.283185307179586),
+        "frequency": 0.8,
+        "delay_expression": "f1",
+        "delay_functions": {
+          "f1": {
+            "component": "mozaik.connectors.modular_connector_functions.PyNNDistributionConnectorFunction",
+            "params": {
+              "pynn_distribution": PyNNDistribution(name='uniform',low=0.5,high=1.5),
+            },
+          },
+        },
+        "topological": True,
+        "or_map": True,
+        "or_map_location": "./or_map_new_6x6",
+        "phase_map": False,
+        "phase_map_location": "./phase_map",
+        "rf_jitter": 0,
+        "off_bias": 1.0,
+        "base_weight": 0.0016,
+        "num_samples": PyNNDistribution(name='uniform',low=44.0,high=44.0),
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 500.0,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+      },
+    },
+    "l23_cortex_exc": {
+      "component": "mozaik.sheets.vision.VisualCorticalUniformSheet",
+      "params": {
+        "name": "V1_Exc_L2/3",
+        "sx": 4000.0,
+        "sy": 4000.0,
+        "density": 1500.0,
+        "mpi_safe": False,
+        "magnification_factor": 1000.0,
+        "cell": {
+          "model": "EIF_cond_exp_isfa_ista",
+          "params": {
+            "v_rest": -70,
+            "v_reset": -55.0,
+            "tau_refrac": 2.0,
+            "tau_m": 17.0,
+            "cm": 0.06,
+            "e_rev_E": 0.0,
+            "e_rev_I": -80.0,
+            "tau_syn_E": 7.0,
+            "tau_syn_I": 11.0,
+            "a": -0.8,
+            "b": 0.08,
+            "delta_T": 0.8,
+            "tau_w": 88.0,
+            "v_thresh": -53.0,
+          },
+          "initial_values": {
+            "v": PyNNDistribution(name='uniform',low=-70,high=-51),
+          },
+        },
+        "artificial_stimulators": {
+
+        },
+        "recording_interval": 1.0,
+        "recorders": {
+          "2": {
+            "component": "mozaik.sheets.population_selector.RCGrid",
+            "variables": ('spikes', 'v', 'gsyn_exc', 'gsyn_inh'),
+            "params": {
+              "size": 200.0,
+              "spacing": 10.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+            },
+          },
+          "3": {
+            "component": "mozaik.sheets.population_selector.RCGrid",
+            "variables": "spikes",
+            "params": {
+              "size": 600.0,
+              "spacing": 20.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+            },
+          },
+          "4": {
+            "component": "mozaik.sheets.population_selector.RCGrid",
+            "variables": "spikes",
+            "params": {
+              "size": 2000.0,
+              "spacing": 100.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+            },
+          },
+        },
+      },
+      "feedback_conn_ratio": 0.2,
+      "L23ExcL23ExcConnection": {
+        "target_synapses": "excitatory",
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 30,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.vision.MapDependentModularConnectorFunction",
+            "params": {
+              "sigma": 1.4,
+              "map_location": "./or_map_new_6x6",
+              "periodic": True,
+            },
+          },
+          "f2": {
+            "component": "mozaik.connectors.modular_connector_functions.GaussianDecayModularConnectorFunction",
+            "params": {
+              "arborization_constant": 270,
+              "arborization_scaler": 1.0,
+            },
+          },
+          "f3": {
+            "component": "mozaik.connectors.modular_connector_functions.GaussianDecayModularConnectorFunction",
+            "params": {
+              "arborization_constant": 1000,
+              "arborization_scaler": 4.0,
+            },
+          },
+        },
+        "delay_functions": {
+          "d1": {
+            "component": "mozaik.connectors.modular_connector_functions.LinearModularConnectorFunction",
+            "params": {
+              "constant_scaler": 1.4,
+              "linear_scaler": 0.0033333333,
+            },
+          },
+        },
+        "weight_expression": "f1*f3+f2",
+        "delay_expression": "d1",
+        "base_weight": 0.0005,
+        "num_samples": 640.0,
+      },
+      "L23ExcL23InhConnection": {
+        "target_synapses": "excitatory",
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 30,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.vision.MapDependentModularConnectorFunction",
+            "params": {
+              "sigma": 1.4,
+              "map_location": "./or_map_new_6x6",
+              "periodic": True,
+            },
+          },
+          "f2": {
+            "component": "mozaik.connectors.modular_connector_functions.GaussianDecayModularConnectorFunction",
+            "params": {
+              "arborization_constant": 270,
+              "arborization_scaler": 1.0,
+            },
+          },
+          "f3": {
+            "component": "mozaik.connectors.modular_connector_functions.GaussianDecayModularConnectorFunction",
+            "params": {
+              "arborization_constant": 1000,
+              "arborization_scaler": 4.0,
+            },
+          },
+        },
+        "delay_functions": {
+          "d1": {
+            "component": "mozaik.connectors.modular_connector_functions.LinearModularConnectorFunction",
+            "params": {
+              "constant_scaler": 0.5,
+              "linear_scaler": 0.0033333333,
+            },
+          },
+        },
+        "weight_expression": "f1*f3+f2",
+        "delay_expression": "d1",
+        "base_weight": 0.0009,
+        "num_samples": 448.0,
+      },
+      "L4ExcL23ExcConnection": {
+        "target_synapses": "excitatory",
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 30,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.modular_connector_functions.HyperbolicModularConnectorFunction",
+            "params": {
+              "theta": 154.45,
+              "alpha": 0.017452,
+            },
+          },
+          "f2": {
+            "component": "mozaik.connectors.vision.MapDependentModularConnectorFunction",
+            "params": {
+              "sigma": 1.4,
+              "map_location": "./or_map_new_6x6",
+              "periodic": True,
+            },
+          },
+        },
+        "delay_functions": {
+
+        },
+        "weight_expression": "f1*f2",
+        "delay_expression": "1.4",
+        "base_weight": 0.0016,
+        "num_samples": 160.0,
+      },
+      "L23ExcL4ExcConnection": {
+        "target_synapses": "excitatory",
+        "short_term_plasticity": None,
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.modular_connector_functions.GaussianDecayModularConnectorFunction",
+            "params": {
+              "arborization_constant": 100.0,
+              "arborization_scaler": 1.0,
+            },
+          },
+          "f2": {
+            "component": "mozaik.connectors.vision.MapDependentModularConnectorFunction",
+            "params": {
+              "sigma": 1.4,
+              "map_location": "./or_map_new_6x6",
+              "periodic": True,
+            },
+          },
+        },
+        "delay_functions": {
+
+        },
+        "weight_expression": "f1*f2",
+        "delay_expression": "1.4",
+        "base_weight": 0.0005,
+        "num_samples": 160.0,
+      },
+      "L23ExcL4InhConnection": {
+        "target_synapses": "excitatory",
+        "short_term_plasticity": None,
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.modular_connector_functions.GaussianDecayModularConnectorFunction",
+            "params": {
+              "arborization_constant": 200.0,
+              "arborization_scaler": 1.0,
+            },
+          },
+          "f2": {
+            "component": "mozaik.connectors.vision.MapDependentModularConnectorFunction",
+            "params": {
+              "sigma": 3.0,
+              "map_location": "./or_map_new_6x6",
+              "periodic": True,
+            },
+          },
+        },
+        "delay_functions": {
+
+        },
+        "weight_expression": "f1*f2",
+        "delay_expression": "0.5",
+        "base_weight": 0.0009,
+        "num_samples": 112.0,
+      },
+    },
+    "l23_cortex_inh": {
+      "component": "mozaik.sheets.vision.VisualCorticalUniformSheet",
+      "params": {
+        "name": "V1_Inh_L2/3",
+        "sx": 4000.0,
+        "sy": 4000.0,
+        "density": 375.0,
+        "mpi_safe": False,
+        "magnification_factor": 1000.0,
+        "cell": {
+          "model": "EIF_cond_exp_isfa_ista",
+          "params": {
+            "v_thresh": -53.0,
+            "v_rest": -70,
+            "v_reset": -55.0,
+            "tau_refrac": 0.5,
+            "tau_m": 10.0,
+            "cm": 0.04,
+            "e_rev_E": 0.0,
+            "e_rev_I": -80.0,
+            "tau_syn_E": 7.0,
+            "tau_syn_I": 11.0,
+            "a": -0.8,
+            "b": 0.08,
+            "delta_T": 0.8,
+            "tau_w": 88.0,
+          },
+          "initial_values": {
+            "v": PyNNDistribution(name='uniform',low=-70,high=-51),
+          },
+        },
+        "artificial_stimulators": {
+
+        },
+        "recording_interval": 1.0,
+        "recorders": {
+          "2": {
+            "component": "mozaik.sheets.population_selector.RCGrid",
+            "variables": ('spikes', 'v', 'gsyn_exc', 'gsyn_inh'),
+            "params": {
+              "size": 200.0,
+              "spacing": 20.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+            },
+          },
+          "3": {
+            "component": "mozaik.sheets.population_selector.RCGrid",
+            "variables": "spikes",
+            "params": {
+              "size": 600.0,
+              "spacing": 20.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+            },
+          },
+        },
+      },
+      "L23InhL23ExcConnection": {
+        "target_synapses": "inhibitory",
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 30,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.modular_connector_functions.HyperbolicModularConnectorFunction",
+            "params": {
+              "theta": 189.59,
+              "alpha": 0.014948,
+            },
+          },
+        },
+        "delay_functions": {
+          "d1": {
+            "component": "mozaik.connectors.modular_connector_functions.LinearModularConnectorFunction",
+            "params": {
+              "constant_scaler": 1.0,
+              "linear_scaler": 0.0033333333,
+            },
+          },
+        },
+        "weight_expression": "f1",
+        "delay_expression": "d1",
+        "base_weight": 0.0023,
+        "num_samples": 200.0,
+      },
+      "L23InhL23InhConnection": {
+        "target_synapses": "inhibitory",
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 30,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.modular_connector_functions.HyperbolicModularConnectorFunction",
+            "params": {
+              "theta": 188.61,
+              "alpha": 0.015001,
+            },
+          },
+        },
+        "delay_functions": {
+          "d1": {
+            "component": "mozaik.connectors.modular_connector_functions.LinearModularConnectorFunction",
+            "params": {
+              "constant_scaler": 1.0,
+              "linear_scaler": 0.0033333333,
+            },
+          },
+        },
+        "weight_expression": "f1",
+        "delay_expression": "d1",
+        "base_weight": 0.0023,
+        "num_samples": 140.0,
+      },
+      "L4ExcL23InhConnection": {
+        "target_synapses": "excitatory",
+        "short_term_plasticity": {
+          "U": 0.75,
+          "tau_rec": 30,
+          "tau_psc": 3.0,
+          "tau_fac": 0.0,
+        },
+        "weight_functions": {
+          "f1": {
+            "component": "mozaik.connectors.modular_connector_functions.HyperbolicModularConnectorFunction",
+            "params": {
+              "theta": 131.56,
+              "alpha": 0.019761,
+            },
+          },
+          "f2": {
+            "component": "mozaik.connectors.vision.MapDependentModularConnectorFunction",
+            "params": {
+              "sigma": 1.4,
+              "map_location": "./or_map_new_6x6",
+              "periodic": True,
+            },
+          },
+        },
+        "delay_functions": {
+
+        },
+        "weight_expression": "f1*f2",
+        "delay_expression": "0.5",
+        "base_weight": 0.0016,
+        "num_samples": 112.0,
+      },
+    },
+    "retina_lgn": {
+      "component": "mozaik.models.vision.spatiotemporalfilter.SpatioTemporalFilterRetinaLGN",
+      "params": {
+        "density": 100,
+        "size": (5.0, 5.0),
+        "linear_scaler": 6.0,
+        "mpi_reproducible_noise": False,
+        "cached": False,
+        "cache_path": "retinal_cache/",
+        "recorders": {
+          "1": {
+            "component": "mozaik.sheets.population_selector.RCRandomN",
+            "variables": ('spikes', 'v', 'gsyn_exc', 'gsyn_inh'),
+            "params": {
+              "num_of_cells": 5,
+            },
+          },
+        },
+        "recording_interval": 1.0,
+        "receptive_field": {
+          "func": "cai97.stRF_2d",
+          "func_params": {
+            "Ac": 1.0,
+            "As": 0.15,
+            "K1": 1.05,
+            "K2": 0.7,
+            "c1": 0.14,
+            "c2": 0.12,
+            "n1": 7.0,
+            "n2": 8.0,
+            "t1": -6.0,
+            "t2": -6.0,
+            "td": 6.0,
+            "sigma_c": 0.4,
+            "sigma_s": 1.0,
+            "subtract_mean": False,
+          },
+          "width": 6.0,
+          "height": 6.0,
+          "spatial_resolution": 0.1,
+          "temporal_resolution": 7.0,
+          "duration": 200.0,
+        },
+        "gain_control": {
+          "gain": 12,
+          "non_linear_gain": {
+            "luminance_gain": 3.0,
+            "luminance_scaler": 0.1,
+            "contrast_scaler": 0.1,
+          },
+        },
+        "cell": {
+          "model": "IF_cond_exp",
+          "params": {
+            "v_thresh": -57.0,
+            "v_rest": -70.0,
+            "v_reset": -70.0,
+            "tau_refrac": 2.0,
+            "tau_m": 10.0,
+            "cm": 0.29,
+            "e_rev_E": 0.0,
+            "e_rev_I": -75.0,
+            "tau_syn_E": 1.5,
+            "tau_syn_I": 10.0,
+          },
+          "initial_values": {
+            "v": -70.0,
+          },
+        },
+        "noise": {
+          "mean": 0.0,
+          "stdev": 1.7,
+        },
+      },
+    },
+  },
+  "only_afferent": False,
+  "l23": True,
+  "results_dir": "",
+  "name": "SelfSustainedPushPullV1",
+  "reset": False,
+  "feedback": True,
+  "null_stimulus_period": 150.0,
+  "store_stimuli": False,
+  "min_delay": 0.1,
+  "max_delay": 100,
+  "time_step": 0.1,
+  "pynn_seed": 936395,
+  "mpi_seed": 1023,
+  "trial": 0,
+}

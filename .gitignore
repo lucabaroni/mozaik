@@ -6,6 +6,4 @@ build
 *.komodoproject
 cover
 .coverage
-ImagesStimuli/
 .vsode
-.gitignore
