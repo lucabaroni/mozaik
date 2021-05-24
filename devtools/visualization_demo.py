@@ -124,15 +124,9 @@ def SparseNoise_default_parameters():
     d = visual_stim_default_parameters()
     d.update(
         {
-<<<<<<< HEAD
-            "experiment_seed": 0,
-            "time_per_image": 20,
-            "blank_time": 20,
-=======
             "blank_time": 0,
             "experiment_seed": 0,
             "time_per_image": 20,
->>>>>>> upstream/master
             "grid_size": 11,
             "grid": True,
         }
