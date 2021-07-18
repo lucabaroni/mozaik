@@ -40,14 +40,19 @@ class SingleValue(AnalysisDataStructure):
     or per sheet if sheet is specified. In principle it can also be per neuron if the neuron
     parameter is specified, but in most cases you probably want to use :class:`.PerNeuronValue`
     instead.
-    """
 
-    value = SNumber(units=None,default=None,doc="The value.")
+    Parameters
+    ---------- 
+    value_unit : quantities
+                Quantities unit describing the unit of the value
+    """
     value_name = SString(doc="The name of the value.")
     period = SNumber(units=None,default=None,doc="The period of the value. If value is not periodic period=None")
     
-    def __init__(self, **params):
+    def __init__(self, value, value_units, **params):
         AnalysisDataStructure.__init__(self, identifier='SingleValue', **params)
+        self.value = value
+        self.value_units = value_units
 
 
 
@@ -248,27 +253,48 @@ class AnalogSignalList(AnalysisDataStructure1D):
             
         return AnalogSignalList(new_asl,self.ids,y_axis_units = self.y_axis_units,x_axis_name = self.x_axis_name,y_axis_name = self.y_axis_name, sheet_name = self.sheet_name)
     
-    def mean(self):
+    def mean(self, ignore_invalid = False):
         """
         Calculates the mean analog signal from the ones in the list.
-        """
-        for asl in self.asl:
-            assert asl.units == self.asl[0].units, "AnalogSignalList.mean: units of AnalogSignal objects in the list do not match."
-            assert asl.sampling_rate == self.asl[0].sampling_rate, "AnalogSignalList.mean: sampling_rate of AnalogSignal objects in the list do not match"
-            assert asl.t_start == self.asl[0].t_start, "AnalogSignalList.mean: t_start of AnalogSignal objects in the list do not match."        
-        
-        return numpy.mean(self.asl,axis=0)
 
-    def var(self):
+        Parameters
+        ----------
+        ignore_invalid : bool  
+            Whether we want to ignore NaN and inf values when computed the mean
+
+        """
+        for asl in self.asl:
+            assert asl.units == self.asl[0].units, "AnalogSignalList.mean: units of AnalogSignal objects in the list do not match."
+            assert asl.sampling_rate == self.asl[0].sampling_rate, "AnalogSignalList.mean: sampling_rate of AnalogSignal objects in the list do not match"
+            assert asl.t_start == self.asl[0].t_start, "AnalogSignalList.mean: t_start of AnalogSignal objects in the list do not match."        
+
+        if ignore_invalid:
+            asl = numpy.array(self.asl, dtype=float)
+            return numpy.mean(numpy.ma.masked_invalid(asl),axis=0)
+        else:
+            return numpy.mean(self.asl,axis=0)
+
+    def var(self, ignore_invalid = False):
         """
         Calculates the mean analog signal from the ones in the list.
+
+        Parameters
+        ----------
+        ignore_invalid : bool
+            Whether we want to ignore NaN and inf values when computed the mean
+
         """
         for asl in self.asl:
             assert asl.units == self.asl[0].units, "AnalogSignalList.mean: units of AnalogSignal objects in the list do not match."
             assert asl.sampling_rate == self.asl[0].sampling_rate, "AnalogSignalList.mean: sampling_rate of AnalogSignal objects in the list do not match"
             assert asl.t_start == self.asl[0].t_start, "AnalogSignalList.mean: t_start of AnalogSignal objects in the list do not match."        
         
-        return numpy.var(self.asl,axis=0)
+        if ignore_invalid:
+            asl = numpy.array(self.asl, dtype=float)
+            return numpy.var(numpy.ma.masked_invalid(asl),axis=0)
+
+        else:
+            return numpy.var(self.asl,axis=0)
 
 
 
