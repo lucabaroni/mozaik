@@ -875,6 +875,37 @@ class PSTH(Analysis):
                                          analysis_algorithm=self.__class__.__name__,
                                          stimulus_id=str(st)))
 
+class PSTHlowmem(Analysis):
+      """
+
+      Low memory version of PSTH analysis releasing each segment after computing the psth
+      
+      Other parameters
+      ------------------- 
+      bin_length : float
+                 The bin length of the PSTH
+    
+      """  
+      required_parameters = ParameterSet({
+        'bin_length': float,  # the bin length of the PSTH
+      })
+      def perform_analysis(self):
+            # make sure spiketrains are also order in the same way
+            for sheet in self.datastore.sheets():
+                dsv = queries.param_filter_query(self.datastore,sheet_name=sheet)
+                for st,seg in zip([MozaikParametrized.idd(s) for s in dsv.get_stimuli()],dsv.get_segments()):
+                    psths = psth(seg.get_spiketrain(seg.get_stored_spike_train_ids()), self.parameters.bin_length)
+                    self.datastore.full_datastore.add_analysis_result(
+                        AnalogSignalList(psths,
+                                         seg.get_stored_spike_train_ids(),
+                                         psths[0].units,
+                                         x_axis_name='time',
+                                         y_axis_name='psth (bin=' + str(self.parameters.bin_length) + ')',
+                                         sheet_name=sheet,
+                                         tags=self.tags,
+                                         analysis_algorithm=self.__class__.__name__,
+                                         stimulus_id=str(st)))
+                    seg.release()
 
 class SpikeCount(Analysis):
       """
