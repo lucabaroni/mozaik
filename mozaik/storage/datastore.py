@@ -14,6 +14,7 @@ import pickle
 from collections import OrderedDict
 import collections
 import os.path
+import os
 
 logger = mozaik.getMozaikLogger()
 
@@ -284,7 +285,7 @@ class DataStoreView(ParametrizedObject):
         This operation removes all ADS that are present in this DataStoreView from the master DataStore.
         """
         if self.full_datastore == self:
-           self.analysis_results = []
+            self.analysis_results = []
         else:
             for ads in self.analysis_results:
                 self.full_datastore.analysis_results.remove(ads)
@@ -295,7 +296,24 @@ class DataStoreView(ParametrizedObject):
             for ads in z:
                 self.full_datastore.analysis_results.remove(ads)
         
-               
+    def remove_seg_from_datastore(self):
+        """
+        This operation removes all segments that are present in this DataStoreView from the master DataStore.
+        ATTENTION: It also removes the pickle files associated to the segments
+        """
+        if self.full_datastore == self:
+            for seg in self.block.segments:
+                os.remove(self.parameters.root_directory + '/' + seg.identifier + '.pickle')    
+            self.block.segments = []
+            for k in self.stimulus_dict.keys():
+                self.stimulus_dict[k] = False
+        else:
+            for seg in self.block.segments:
+                self.full_datastore.block.segments.remove(seg)
+                self.full_datastore.stimulus_dict[seg.annotations['stimulus']] = False
+                os.remove(self.full_datastore.parameters.root_directory + '/' + seg.identifier + '.pickle')    
+        
+     
         
     
 class DataStore(DataStoreView):
@@ -485,7 +503,7 @@ class Hdf5DataStore(DataStore):
         self.block.segments = old
 
         f = open(self.parameters.root_directory + '/datastore.analysis.pickle', 'wb')
-        pickle.dump(self.analysis_results, f)
+        pickle.dump(self.analysis_results, f, protocol=2)
         f.close()
 
     def add_analysis_result(self, result):
@@ -514,7 +532,6 @@ class PickledDataStore(Hdf5DataStore):
     """
 
     def load(self):
-
         f = open(self.parameters.root_directory + '/datastore.recordings.pickle',  'rb')
         self.block = pickle.load(f)
         for s in self.block.segments:
@@ -535,15 +552,15 @@ class PickledDataStore(Hdf5DataStore):
 
     def save(self):
         f = open(self.parameters.root_directory + '/datastore.recordings.pickle', 'wb')
-        pickle.dump(self.block, f)
+        pickle.dump(self.block, f, protocol=2)
         f.close()
 
         f = open(self.parameters.root_directory + '/datastore.analysis.pickle', 'wb')
-        pickle.dump(self.analysis_results, f)
+        pickle.dump(self.analysis_results, f, protocol=2)
         f.close()
 
         f = open(self.parameters.root_directory + '/datastore.sensory.stimulus.pickle', 'wb')
-        pickle.dump(self.sensory_stimulus, f)
+        pickle.dump(self.sensory_stimulus, f, protocol=2)
         f.close()
 
     def add_recording(self, segments, stimulus):
@@ -556,7 +573,7 @@ class PickledDataStore(Hdf5DataStore):
                                            self.parameters.root_directory))
             f = open(self.parameters.root_directory + '/' + 'Segment'
                      + str(len(self.block.segments) - 1) + ".pickle", 'wb')
-            pickle.dump(s, f)
+            pickle.dump(s, f, protocol=2)
 
         self.stimulus_dict[str(stimulus)] = True
 
@@ -574,4 +591,10 @@ class PickledDataStore(Hdf5DataStore):
                                            self.parameters.root_directory,null=True))
             f = open(self.parameters.root_directory + '/' + 'Segment'
                      + str(len(self.block.segments) - 1) + ".pickle", 'wb')
-            pickle.dump(s, f)
+            pickle.dump(s, f, protocol=2)
+
+    def purge_segments(self):
+        """Purge all segments contained in the datastore from their spiketrains and analogsignals"""
+        for s in self.block.segments:
+            if s.full:
+                s.release()
