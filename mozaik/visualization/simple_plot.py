@@ -9,6 +9,7 @@ import mozaik
 import mozaik.tools.units
 import quantities as pq
 from matplotlib.colors import *
+from matplotlib.ticker import MultipleLocator, AutoMinorLocator
 from cycler import cycler
 from collections import OrderedDict
 
@@ -182,6 +183,9 @@ class StandardStyle(SimplePlot):
         title : str
               What is the title (None means no label will be plotted)
 
+        title_loc : str
+              Location of the title (left, center, right)
+
         x_scale : str
               What is the scaling of the x-axis ('linear' | 'log' | 'symlog'), default is 'linear'
 
@@ -230,6 +234,12 @@ class StandardStyle(SimplePlot):
         y_tick_pad  : float
                     What are the y tick padding of labels for axis.
 
+        x_tick_auto_minor_locator  : int
+                    How many minor x ticks per major x tick. If None or not specified, minor x ticks are not displayed
+
+        y_tick_auto_minor_locator  : int
+                    How many minor x ticks per major x tick. If None or not specified, minor x ticks are not displayed
+
         grid : bool
              Do we show grid?
         """
@@ -250,6 +260,7 @@ class StandardStyle(SimplePlot):
             "left_border": True,
             "bottom_border": True,
             "title": None,
+            "title_loc": None,
             "x_scale": 'linear',
             "x_scale_base": None,
             "x_scale_linscale": None,
@@ -266,6 +277,8 @@ class StandardStyle(SimplePlot):
             "y_tick_labels": None,
             "x_tick_pad": fontsize - 5,
             "y_tick_pad": fontsize - 5,
+            "x_tick_auto_minor_locator": None,
+            "y_tick_auto_minor_locator": None,
             "grid" : False,
         }
 
@@ -301,7 +314,9 @@ class StandardStyle(SimplePlot):
         y_scale_params = {}
 
         if self.title != None:
-            pylab.title(self.title, fontsize=self.fontsize)
+            if self.title_loc == None:
+                self.title_loc = "center"
+            pylab.title(self.title, loc=self.title_loc, fontsize=self.fontsize)
         
         if self.x_scale:
             if self.x_scale_base:
@@ -365,9 +380,14 @@ class StandardStyle(SimplePlot):
                 else:
                     pylab.xticks(self.x_ticks)
                     phf.remove_x_tick_labels()
+                if self.x_tick_auto_minor_locator:
+                    self.axis.xaxis.set_minor_locator(AutoMinorLocator(self.x_tick_auto_minor_locator))
             elif self.x_ticks != None:
                  pylab.xticks(self.x_ticks)
                  phf.short_tick_labels_axis(self.axis.xaxis)
+                 if self.x_tick_auto_minor_locator:
+                    self.axis.xaxis.set_minor_locator(AutoMinorLocator(self.x_tick_auto_minor_locator))
+
             else:
                 if self.x_tick_style == 'Min':
                     phf.three_tick_axis(self.axis.xaxis,log=(self.x_scale!='linear'))
@@ -376,7 +396,6 @@ class StandardStyle(SimplePlot):
                    phf.remove_x_tick_labels()
                 else:
                     raise ValueError('Unknown x tick style %s', self.x_tick_style)
-
         if self.y_axis:
             if self.y_ticks != None and self.y_tick_style == 'Custom':
                 if self.y_tick_labels != None:
@@ -385,9 +404,15 @@ class StandardStyle(SimplePlot):
                 else:
                     pylab.yticks(self.y_ticks)
                     phf.remove_y_tick_labels()
+                if self.y_tick_auto_minor_locator:
+                    self.axis.yaxis.set_minor_locator(AutoMinorLocator(self.y_tick_auto_minor_locator))
+
             elif self.y_ticks != None:
-                 pylab.yticks(self.y_ticks)
-                 phf.short_tick_labels_axis(self.axis.yaxis)
+                pylab.yticks(self.y_ticks)
+                phf.short_tick_labels_axis(self.axis.yaxis)
+                if self.y_tick_auto_minor_locator:
+                    self.axis.yaxis.set_minor_locator(AutoMinorLocator(self.y_tick_auto_minor_locator))
+
             else:
                 if self.y_tick_style == 'Min':
                     phf.three_tick_axis(self.axis.yaxis,log=(self.y_scale!='linear'))
@@ -598,6 +623,12 @@ class StandardStyleAnimatedPlot(StandardStyle):
         return a,
 
     def post_plot(self):
+        assert self.l is not None, "Length of animation has to be set before plotting!"
+        if self.plotting_parent.animation_num_frames:
+            assert self.plotting_parent.animation_num_frames == self.l, "The length of all recordings in a single animation must be the same!"
+        else:
+            self.plotting_parent.animation_num_frames = self.l
+
         StandardStyle.post_plot(self)
         self.plotting_parent.register_animation_update_function(StandardStyleAnimatedPlot._plot_next_frame,self)
 
@@ -702,7 +733,7 @@ class ScatterPlotMovie(StandardStyleAnimatedPlot):
                                          alpha=0.4,
                                          cmap='gray')
         pylab.axis('equal')
-        pylab.gca().set_axis_bgcolor('black')
+        pylab.gca().set_facecolor('black')
 
 class ScatterPlot(StandardStyle):
     """
@@ -793,8 +824,6 @@ class ScatterPlot(StandardStyle):
                                vmax=vmax)
         if self.equal_aspect_ratio:
             self.axis.set_aspect(aspect=1.0, adjustable='box')
-        logger.debug(numpy.min(self.x))
-        logger.debug(numpy.max(self.x))
         self.x_lim = (numpy.min(self.x),numpy.max(self.x))
         self.y_lim = (numpy.min(self.y),numpy.max(self.y))
 
@@ -838,7 +867,7 @@ class StandardStyleLinePlot(StandardStyle):
            The colors of the plots. If it is one color all plots will have that same color. If it is a list its
            length should correspond to length of x and y and the corresponding colors will be assigned to the individual graphs.
            If dict, the keys should be labels, and values will be the colors that will be assigned to the lines that correspond to the labels.
-
+           
     linestyles : str or list of str or dict
            The linestyles of the plots. If it is scalar all plots will have that same linestyle. If it is a list its
            length should correspond to length of x and y and the corresponding linestyles will be assigned to the individual graphs.
@@ -966,8 +995,6 @@ class StandardStyleLinePlot(StandardStyle):
                     ymin = self.y[i] - self.error[i]
                     ymax = self.y[i] + self.error[i]
                     self.axis.fill_between(self.x[i], ymax, ymin, color=p['color'], alpha=0.2)
-            
-            pylab.hold('on')
 
             tmin = min(tmin, self.x[i][0])
             tmax = max(tmax, self.x[i][-1])
@@ -979,7 +1006,6 @@ class StandardStyleLinePlot(StandardStyle):
         if self.legend:
             self.axis.legend()
         self.x_lim = (tmin, tmax)
-        logger.info(str(self.parameters))
 
 class ConductancesPlot(StandardStyle):
     """
@@ -1000,6 +1026,9 @@ class ConductancesPlot(StandardStyle):
 
     legend : bool
            Whether legend should be displayed.
+
+    smooth_means : bool
+           Whether to apply low pass filter to the mean of the conductances.
     """
 
     def __init__(self, exc, inh,**param):
@@ -1007,6 +1036,7 @@ class ConductancesPlot(StandardStyle):
         self.gsyn_es = exc
         self.gsyn_is = inh
         self.parameters["legend"] = False
+        self.parameters["smooth_means"] = False
 
     def plot(self):
         mean_gsyn_e = numpy.zeros(numpy.shape(self.gsyn_es[0]))
@@ -1027,10 +1057,12 @@ class ConductancesPlot(StandardStyle):
         mean_gsyn_i = mean_gsyn_i / len(self.gsyn_is)
         mean_gsyn_e = mean_gsyn_e / len(self.gsyn_es)
         from scipy.signal import savgol_filter
-        #p1, = self.axis.plot(numpy.transpose(time_axis).flatten(), savgol_filter(numpy.transpose(mean_gsyn_e).tolist(),151,2).flatten(), color='r', linewidth=3)
-        #p2, = self.axis.plot(numpy.transpose(time_axis).flatten(), savgol_filter(numpy.transpose(mean_gsyn_i).tolist(),151,2).flatten(), color='b', linewidth=3)
-        p1, = self.axis.plot(time_axis, mean_gsyn_e.tolist(), color='r', linewidth=1)
-        p2, = self.axis.plot(time_axis, mean_gsyn_i.tolist(), color='b', linewidth=1)
+        if self.smooth_means:
+            p1, = self.axis.plot(numpy.transpose(time_axis).flatten(), savgol_filter(numpy.transpose(mean_gsyn_e).tolist(),151,2).flatten(), color='r', linewidth=3)
+            p2, = self.axis.plot(numpy.transpose(time_axis).flatten(), savgol_filter(numpy.transpose(mean_gsyn_i).tolist(),151,2).flatten(), color='b', linewidth=3)
+        else:    
+            p1, = self.axis.plot(time_axis, mean_gsyn_e.tolist(), color='r', linewidth=1)
+            p2, = self.axis.plot(time_axis, mean_gsyn_i.tolist(), color='b', linewidth=1)
         if self.legend:
             self.axis.legend([p1, p2], ['exc', 'inh'])
 
@@ -1177,6 +1209,16 @@ class HistogramPlot(StandardStyle):
 
     colors : list
            The colors to assign to the different sets of spikes.
+
+    legend : bool
+           If true the legend will be shown
+
+    histtype : string
+           The type of Histogram to draw. Default is 'bar'
+
+    rwidth : float
+           The relative width of the bars as a fraction of the bin width
+
     """
 
     def __init__(self, values,labels=None,**param):
@@ -1189,6 +1231,10 @@ class HistogramPlot(StandardStyle):
         self.parameters["colors"] = None
         self.parameters["mark_mean"] = False
         self.parameters["mark_value"] = False
+        self.parameters["legend"] = False
+        self.parameters["histtype"] = 'bar'
+        self.parameters["rwidth"] = None
+
         if labels != None:
             assert len(values) == len(labels)
 
@@ -1199,16 +1245,15 @@ class HistogramPlot(StandardStyle):
            colors = [self.colors[k] for k in self.labels]
         else:
            colors = None
-
         if self.x_scale == 'log':
             bins = np.geomspace(self.x_lim[0], self.x_lim[1], int(self.num_bins))
         else:
             bins = int(self.num_bins)
 
         if self.parameters["log"]:
-           self.axis.hist(numpy.log10(self.values),bins=bins,range=self.x_lim,edgecolor='none',color=colors)
+            self.axis.hist(numpy.log10(self.values),bins=bins,range=self.x_lim,edgecolor='none',color=colors,histtype=self.histtype,rwidth=self.rwidth)
         else:
-            self.axis.hist(self.values,bins=bins,range=self.x_lim,rwidth=1,edgecolor='none',color=colors)
+            self.axis.hist(self.values,bins=bins,range=self.x_lim,edgecolor='none',color=colors,histtype=self.histtype,rwidth=self.rwidth)
 
         if self.mark_mean:
            for i,a in enumerate(self.values):
@@ -1233,6 +1278,9 @@ class HistogramPlot(StandardStyle):
                     arrowprops=dict(arrowstyle="->",
                                     connectionstyle="arc3",linewidth=3.0,color='r'),
                         )
+
+        if self.legend:
+            self.axis.legend()
 
         self.y_label = '#'
 
