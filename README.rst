@@ -1,106 +1,27 @@
-Installation intructions
-========================
-
-Dependencies
-------------
-* python 2.7 or later
-* scipy/numpy
-* nest (latest release, compiled with mpi)
-* mpi4py
-* pyNN 
-* imagen
-* param
-* parameters
-* quantities 
-* neo
-
-Installation
-------------
-
-Instructions::
-
-  git clone https://github.com/antolikjan/mozaik.git
-  cd mozaik
-  python setup.py install
-  
-Please see below:
- * the installation of the dependencies.
- * the installation on Ubuntu Linux
- * how to run the examples
- 
-.. _ref-detailed:
-
-Detailed instructions
----------------------
-
-.. _ref-virtual-env:
-
-Virtual env
-___________
-
-We recommend to install mozaik using the virtualenv python environment manager (http://pypi.python.org/pypi/virtualenv/) , to prevent potential
-conflicts with standard versions of required libraries. Users can follow for example http://simononsoftware.com/virtualenv-tutorial tutorial or just do the following steps:
- 
- * Install virtualenv
- * Create (for example in your home directory) a directory where all virtual environments will be created home/virt_env
- * Create the virtual environment for mozaik:: 
-    
-    virtualenv virt_env/virt_env_mozaik/ --verbose --no-site-packages
-
- * Load the virtual environment for mozaik by::
- 
-    source virt_env/virt_env_mozaik/bin/activate
-
-Your shell should look now something like::
-
-(virt_env_mozaik)Username@Machinename:~$
-
-Dependencies 
-____________
-
-Note that if the installation is done in your virtualenv environment, it doesn't require any root privilege. Unless specified otherwise
-all dependencies should be installed via pip.
-
- * scipy
- * numpy
- * mpi4py
- * matplotlib (1.1 and higher)
- * quantities
- * imagen
- * PyNN
- * Neo
- * parameters
- * param
-
-For mozaik itself, you need to clone with the help of git::
-
-  git clone https://github.com/antolikjan/mozaik.git
-  python setup.py install
-
-
-VIRTUALENV NOTE: You might already have some of the above packages
-if you've used the option --system-site-packages when creating the virtual environment for mozaik.
-You can list the packages you have e.g. with the help of yolk):
-If you've set up the virt_env with the option --system-site-packages and
-you're using scipy, numpy, matplotlib anyway you don't have to install those in your virt_env.
-
-.. _ref-ubuntu:
-
-Ubuntu
+Mozaik
 ------
 
+Computational neurosceince is shifting towards more heterogeneous models of neuronal circuits, and application of complex experimental protocols. This escalation of complexity is not sufficiently met by existing tool chains. **Mozaik** is a workflow system for spiking neuronal network simulations written in Python that integrates model, experiment and stimulation specification, simulation execution, data storage, data analysis and visualization into a single automated workflow. This way, **Mozaik** increases the productivity of running virtual experiments on complex heterogenous spiking neuronal networks. 
+
+You can read more about **Mozaik** `here <https://www.frontiersin.org/articles/10.3389/fninf.2013.00034/full>`_.
+
+Currently, **Mozaik** is being fully tested only on Ubuntu Linux distribution.
+
+Ubuntu installation instructions
+--------------------------------
+
 Following these instruction should give you a working copy of mozaik on a 
-fresh installation of Ubuntu (at the time of the writing the version was 16.04)
+fresh installation of current Ubuntu system.
 
 First the list of ubuntu package dependencies::
 
-  sudo apt-get install python3 python3-dev python3-pip python3-setuptools python3-tk python-nose subversion git libopenmpi-dev g++ libjpeg8 libjpeg8-dev libfreetype6 libfreetype6-dev zlib1g-dev libpng++-dev libncurses5 libncurses5-dev libreadline-dev liblapack-dev libblas-dev gfortran libgsl0-dev openmpi-bin python-tk cmake
+  sudo apt-get install python3 python3-dev python3-pip python3-setuptools python3-tk python-nose subversion git libopenmpi-dev g++ libjpeg8 libjpeg8-dev libfreetype6 libfreetype6-dev zlib1g-dev libpng++-dev libncurses5 libncurses5-dev libreadline-dev liblapack-dev libblas-dev gfortran libgsl0-dev openmpi-bin python-tk cmake libboost-all-dev
 
 
 Virtual env
 ____________
 
-Then python virtualenv and virtualenvwrapper (an handy way to manage python virtual environments)::
+Then python virtualenv and virtualenvwrapper (a handy way to manage python virtual environments)::
 
 $ sudo pip3 install virtualenv
 $ sudo pip3 install virtualenvwrapper
@@ -113,7 +34,7 @@ To setup `virtualenvwrapper <http://virtualenvwrapper.readthedocs.org/en/latest/
     export PIP_VIRTUALENV_BASE=$WORKON_HOME
     export PIP_RESPECT_VIRTUALENV=true
 
-For the first time, run .bashrc (the next times it will be loaded by your terminal)::      
+For the first time, run .bashrc (in the future it will be loaded by your terminal)::      
 
 $ source .bashrc
 
@@ -128,33 +49,33 @@ Dependencies
 ____________
 
  
-Now you can install in this protected environment all other dependencies::
+Now you can install all other dependencies in this protected environment::
 
-  pip3 install numpy scipy mpi4py matplotlib==2.1.1 quantities lazyarray interval Pillow param==1.5.1 parameters neo==0.8.0 cython pynn psutil future requests libboost-all-dev
+  pip3 install numpy scipy mpi4py matplotlib quantities lazyarray interval Pillow param==1.5.1 parameters neo==0.9.0 cython pynn psutil future requests elephant pytest-xdist pytest-timeout junitparser
 
-Now we will manually install several packages. It is probably the best if you create a separate directory in an appropriate
-place, where you will download and install from the packages.
+Next we will manually install several packages. It is probably the best if you create a separate directory in an appropriate
+place, where you will download and install the packages from.
 
-First we will install *imagen* package::
+First install the *imagen* package::
 
   git clone https://github.com/CSNG-MFF/imagen.git
   cd imagen
   python setup.py install
 
-Now we can install *Nest* (always in the virtual environment):
+Next install the *Nest* simulator (always in the virtual environment):
 
     - download the latest version from their `website <http://www.nest-initiative.org/index.php/Software:Download>`_
         
-        wget https://github.com/nest/nest-simulator/archive/v2.20.1.tar.gz
+        wget https://github.com/nest/nest-simulator/archive/refs/tags/v3.1.tar.gz
         
     - untar and cd into it::
 
-        tar xvfz v2.20.1.tar.gz
-        cd nest-simulator-2.20.1
+        tar xvfz v3.1.tar.gz
+        cd nest-simulator-3.1
     
-    - then configure, choose if you want mpi::
+    - then configure (change path to wherever you installed your virtual environemnt)::
     
-        (mozaik)$ cmake -Dwith-mpi=OFF -Dwith-boost=ON -DCMAKE_INSTALL_PREFIX:PATH=$HOME/virt_env/mozaik -Dwith-optimize='-O3' ./
+        (mozaik)$ cmake -Dwith-mpi=ON -Dwith-boost=ON -DCMAKE_INSTALL_PREFIX:PATH=$HOME/virt_env/mozaik -Dwith-optimize='-O3' ./
        
     - finally, by launching make and install, it installs PyNest in the activated virtual environment mozaik::
     
@@ -175,7 +96,9 @@ And, finally, Mozaik::
     cd mozaik
     python setup.py install
     
+
 .. _ref-run:
+
 
 Running examples
 ----------------
@@ -186,37 +109,13 @@ Go to the examples directory in the mozaik cloned from github (see above) and la
   cd VogelsAbbott2005
   python run.py nest 2 param/defaults 'test'
   
-This will launch the example with the nest simulator, on 2 nodes with each node using 2 threads, using the parameter param/defaults. Last, 'test' is the name of this run.
+This will launch the example with the nest simulator running 2 MPI processes, each process running 2 threads, using the parameterization of the model rotted in param/defaults. Finally, 'test' is the name of this run.
 
-.. _ref-docker:
-
-Simple Installation with Docker
--------------------------------
-
-Run the following commands to build a Docker container with Mozaik::
-
-  git clone https://github.com/CSNG-MFF/mozaik.git
-  cd mozaik
-  docker build --tag antolikjan/mozaik --target prod .
-
-To run the examples::
-
-  cd examples
-  cd VogelsAbbott2005
-  docker run --rm -v "`pwd`:/app" antolikjan/mozaik run.py nest 2 param/defaults 'test'
-
-To build a development container::
-
-  docker build --tag antolikjan/mozaik:dev --target dev .
-
-To run tests::
-
-  docker run --rm -v "`pwd`:/app" antolikjan/mozaik:dev pytest
 
 Testing, Autoformat, Continuous Integration
 -------------------------------------------
 
-In case you want to contribute to the project, you need to make sure your code passes all unit tests and is formatted with the Black autoformatter. You can make sure this is the case by running from the project directory::
+In case you want to contribute to the project, you need to make sure your code passes all unit tests and is formatted with the Black autoformatter. You can make sure this is the case by running following from the project directory::
 
   pytest && black --check .
 
