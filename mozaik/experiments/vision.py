@@ -42,27 +42,29 @@ class MeasureNaturalImages(VisualExperiment):
     TODO update this
     """
     required_parameters = ParameterSet({
+            "duration": float,
             'images_folder' : str,
-            'number_of_images' : int,
-            'time_per_image' : float,
+            'num_images' : int,
+            'image_display_duration' : float,
+            'num_skipped_images': int,
             'num_trials' : int,
+            'size': float,
     })  
     def __init__(self,model,parameters):
         VisualExperiment.__init__(self, model,parameters)
-
-        for k in xrange(0, self.parameters.num_trials):
-
-            img_paths = os.listdir(self.parameters.images_folder)
-            img_paths = img_paths[:self.parameters.number_of_images]
+        img_paths = [os.path.join(self.parameters.images_folder, f) for f in os.listdir(self.parameters.images_folder)]
+        img_paths.sort()
+        img_paths = img_paths[self.parameters.num_skipped_images : self.parameters.num_skipped_images + self.parameters.num_images]
+        for k in range(0, self.parameters.num_trials):
             numpy.random.shuffle(img_paths)
-
-            for image_name in img_paths:
-                image_location = os.path.join(self.parameters.images_folder, image_name)
+            for img_path in img_paths:
                 self.stimuli.append(
                     topo.NaturalImage(
                                 frame_duration=self.frame_duration,
-                                image_location=image_location,
-                                duration=self.parameters.time_per_image,
+                                image_location=img_path,
+                                duration = self.parameters.duration,
+                                image_duration=self.parameters.image_display_duration,
+                                blank_duration=self.parameters.duration - self.parameters.image_display_duration,
                                 size_x=model.visual_field.size_x,
                                 size_y=model.visual_field.size_y,
                                 location_x=0.0,
@@ -70,7 +72,7 @@ class MeasureNaturalImages(VisualExperiment):
                                 background_luminance=self.background_luminance,
                                 density=self.density,
                                 trial=k,
-                                size=60,  # x size of image
+                                size=self.parameters.size,  # x size of image
                                 ))
 
     def do_analysis(self, data_store):

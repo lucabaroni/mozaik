@@ -951,30 +951,19 @@ class PSTH(Analysis):
                                          analysis_algorithm=self.__class__.__name__,
                                          stimulus_id=str(st)))
 
-<<<<<<< HEAD
-class PSTHlowmem(Analysis):
-      """
-
-      Low memory version of PSTH analysis releasing each segment after computing the psth
-=======
 class PSTHLowRAM(Analysis):
       """
       For each recording in the datastore view it creates an AnalogSignalList containing the PSTH of the neuron
       using the bin length `required_parameters.bin_length`.
       Release the mozaik segments once the PSTH are computed to spare some RAM
 
->>>>>>> da5e185bd13f04616044c8f38c61caf08c99d028
       
       Other parameters
       ------------------- 
       bin_length : float
                  The bin length of the PSTH
     
-<<<<<<< HEAD
-      """  
-=======
       """
->>>>>>> da5e185bd13f04616044c8f38c61caf08c99d028
       required_parameters = ParameterSet({
         'bin_length': float,  # the bin length of the PSTH
       })
@@ -992,16 +981,10 @@ class PSTHLowRAM(Analysis):
                                          y_axis_name='psth (bin=' + str(self.parameters.bin_length) + ')',
                                          sheet_name=sheet,
                                          tags=self.tags,
-<<<<<<< HEAD
-                                         analysis_algorithm=self.__class__.__name__,
-                                         stimulus_id=str(st)))
-                    seg.release()
-=======
                                          analysis_algorithm='PSTH',
                                          stimulus_id=str(st)))
                     seg.release()
 
->>>>>>> da5e185bd13f04616044c8f38c61caf08c99d028
 
 class SpikeCount(Analysis):
       """

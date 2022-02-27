@@ -33,23 +33,26 @@ class TopographicaBasedVisualStimulus(VisualStimulus):
 
 class NaturalImage(TopographicaBasedVisualStimulus):
     """
-    A visual stimulus consisting in a static image.
+    A visual stimulus consisting in a static image that can be followed by a blank
     
     """
     size = SNumber(degrees, doc="The length of the longer axis of the image in visual degrees")
     image_location = SString(doc="Location of the image")
-    duration = SNumber(ms, doc="Duration of the image display")
+    image_duration = SNumber(ms, doc="Duration of the image display")
+    blank_duration = SNumber(ms, doc="Duration of the image display")
+    duration = SNumber(ms, doc="Duration of the image display + blank")
     
     def __init__(self,**params):
         TopographicaBasedVisualStimulus.__init__(self, **params)
-        assert (self.duration/self.frame_duration) % 1.0 == 0.0, "The duration of image presentation should be multiple of frame duration."
+        assert (self.image_duration/self.frame_duration) % 1.0 == 0.0, "The duration of image presentation should be multiple of frame duration."
+        assert ((self.duration- self.image_duration)/self.frame_duration) % 1.0 == 0.0, "The duration of blank presentation should be multiple of frame duration."
         
     def frames(self):
         self.pattern_sampler = imagen.image.PatternSampler(
                                     size_normalization='fit_longest',
                                     whole_pattern_output_fns=[MaximumDynamicRange()])
 
-        image = imagen.image.FileImage(         
+        img = imagen.image.FileImage(         
                                     filename=self.image_location,
                                     x=0,
                                     y=0,
@@ -62,9 +65,14 @@ class NaturalImage(TopographicaBasedVisualStimulus):
                                     scale=2*self.background_luminance,
                                     pattern_sampler=self.pattern_sampler)
 
-
-        for i in range(int(self.duration/self.frame_duration)):
-                yield (image(),[i])
+        image = img()
+        blank = image*0+self.background_luminance
+        print("tpi",self.image_duration)
+        print('dur', self.duration)
+        for i in range(int(self.image_duration/self.frame_duration)):
+                yield (image,[i])
+        for i in range(int((self.duration- self.image_duration)/self.frame_duration)):
+                yield (blank, [i]) 
 
 
 class ImagesSequence(TopographicaBasedVisualStimulus):
@@ -1195,7 +1203,7 @@ class GaborStimulus(TopographicaBasedVisualStimulus):
         loc = locals()
         params = loc
         for var_name in loc:
-            if var_name is "self":
+            if var_name == "self":
                 continue
             if loc[var_name] is None and hasattr(self,var_name):
                 params[var_name] = getattr(self,var_name)

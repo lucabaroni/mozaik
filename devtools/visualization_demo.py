@@ -1,6 +1,8 @@
+#%%
 import matplotlib
 
-matplotlib.use("TkAgg")
+# matplotlib.use("TKAgg")
+
 import mozaik.stimuli.vision.topographica_based as topo
 import mozaik.experiments.vision as exp
 import stimulus_visualization as viz
@@ -57,7 +59,7 @@ def NaturalImage_stim_default_parameters():
     d.update(
         {
             "size": 20.307,
-            "image_location": "/home/luca/Hillier/images/BBC_life_of_animals/image_1001.tif",
+            "image_location": "/home/baroni/images/BBC_life_of_animals/image_1001.tif",
             "duration": 100,
         }
     )
@@ -71,8 +73,8 @@ def ImagesSequence_stim_default_parameters():
     time_per_blank = 100
     d.update(
         {
-            "size": 20.307,
-            "images_folder": "/home/luca/Hillier/images/BBC_life_of_animals/",
+            "size": 11,
+            "images_folder": "/projects/imagenet/val_grayscale110x110_cropped/",
             "number_of_images": 5,
             "time_per_image": time_per_image,
             "time_per_blank": time_per_blank,
@@ -85,12 +87,12 @@ def ImagesSequence_stim_default_parameters():
 
 def IS_exp_default_parameters():
     d = {
-        "images_folder": "/home/luca/Hillier/images/BBC_life_of_animals/",
+        "images_folder": "/projects/imagenet/val_grayscale110x110_cropped/",
         "num_images": 20,
         "num_images_per_stimulus": 10,
         "num_trials": 1,
         "num_skipped_images": 1,
-        "size": 20.307,
+        "size": 11,
         "time_per_image": 100,
         "time_per_blank": 100,
     }
@@ -185,6 +187,23 @@ def MapTwoStrokeGabor_default_parameters():
     return d
 
 
+def NaturalImages_default_parameters():
+    d = exp_default_parameters()
+    d.update(
+        {
+            "duration": 14,
+            "images_folder": "/projects/imagenet/val_grayscale110x110_cropped/",
+            "num_images": 3,
+            "image_display_duration": 7,
+            "num_skipped_images": 0,
+            "num_trials": 2,
+            "size": 11,
+        }
+    )
+
+    return d
+
+
 def demo_show_frame():
     params = ContinuousGaborMovementAndJump_default_parameters()
     stim = topo.ContinuousGaborMovementAndJump(**params)
@@ -273,27 +292,38 @@ def demo_experiment_ImagesSequence():
     viz.show_experiment(experiment, merge_stimuli=False, grid=None)
 
 
-def main():
-
-    if True:
-        # Try out show_stimulus arguments
-
-        demo_experiment_ImagesSequence()
-    #     demo_stimulus_1()
-    #     demo_stimulus_0_duration()
-    #     demo_stimulus_0_grid()
-    #     demo_stimulus_0_frame_delay()
-    #     # demo_stimulus_0_animate() # Commented out as you'd have to click through all frames
-    #     demo_stimulus_NaturalImagesSequence()
-
-    # if True:
-    #     # Try out visualizing experiments
-    #     demo_experiment_0()
-    #     demo_experiment_1()
-
-    # if True:
-    #     # Try out the underlying show_frame function
-    #     demo_show_frame()
+def demo_experiment_NaturalImages():
+    model = dm.DummyModel(**visual_stim_default_parameters())
+    params = NaturalImages_default_parameters()
+    print("params", params)
+    parameters = ParameterSet(params)
+    experiment = exp.MeasureNaturalImages(model=model, parameters=parameters)
+    viz.show_experiment(experiment, merge_stimuli=False, grid=None)
 
 
-main()
+demo_experiment_NaturalImages()
+
+# def main():
+#     if True:
+
+# Try out show_stimulus arguments
+
+
+# demo_experiment_NaturalImages()
+#     demo_stimulus_1()
+#     demo_stimulus_0_duration()
+#     demo_stimulus_0_grid()
+#     demo_stimulus_0_frame_delay()
+#     # demo_stimulus_0_animate() # Commented out as you'd have to click through all frames
+#     demo_stimulus_NaturalImagesSequence()
+
+# if True:
+#     # Try out visualizing experiments
+#     demo_experiment_0()
+#     demo_experiment_1()
+
+# if True:
+#     # Try out the underlying show_frame function
+#     demo_show_frame()
+
+# %%

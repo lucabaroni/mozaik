@@ -2,8 +2,10 @@
 """
 """
 from enum import unique
+from imagen.image import ImageSampler
 import matplotlib
 from numpy import sign
+from param import Filename
 
 matplotlib.use("Agg")
 import pandas as pd
@@ -42,7 +44,116 @@ import imagen
 import pickle
 
 
+def export_stim_and_resp_from_natural_images_stimuli(
+    datastore, sheets_delay_dictionary=None, time_window=None, output_file=None
+):
+    def reconstruct_stimulus(stim):
+        image = imagen.image.FileImage(
+            filename=stim.image_location,
+            x=stim.location_x,
+            y=stim.location_y,
+            xdensity=stim.density,
+            ydensity=stim.density,
+            size=stim.size,
+            bounds=imagen.image.BoundingBox(
+                points=(
+                    (-stim.size_x / 2, -stim.size_y / 2),
+                    (stim.size_x / 2, stim.size_y / 2),
+                )
+            ),
+            scale=2 * stim.background_luminance,
+            pattern_sampler=stim.pattern_sampler,
+        )()
+        return image
+
+    if sheets_delay_dictionary == None:
+        sheets_delay_dictionary = dict.fromkeys(
+            datastore.sheets(), 0
+        )  # consider all sheets without any delay
+    assert all(sheet in datastore.sheets() for sheet in sheets_delay_dictionary.keys())
+    trials = list(
+        set(
+            [
+                MozaikParametrized.idd(s).trial
+                for s in queries.param_filter_query(
+                    datastore, st_name="NaturalImage"
+                ).get_stimuli()
+            ]
+        )
+    )
+    img_paths = list(
+        set(
+            [
+                MozaikParametrized.idd(s).image_location
+                for s in queries.param_filter_query(
+                    datastore, st_name="NaturalImage"
+                ).get_stimuli()
+            ]
+        )
+    )
+    for trial in trials:
+        stim_list = []
+        resp_list = []
+        for img_path in img_paths:
+            resp_list_per_sheet = []
+            for sheet in sheets_delay_dictionary.keys():
+                dsv = queries.param_filter_query(
+                    datastore,
+                    sheet_name=sheet,
+                    st_name="NaturalImage",
+                    st_images_locations_file=img_path,
+                    st_trial=trial,
+                )
+                PSTHLowRAM(dsv, ParameterSet({"bin_length": 1.0})).perform_analysis()
+                dsv = queries.param_filter_query(
+                    datastore,
+                    sheet_name=sheet,
+                    st_name="NaturalImage",
+                    st_images_locations_file=img_path,
+                    st_trial=trial,
+                )
+                signals, stimuli = zip(
+                    *[
+                        (asl.asl, MozaikParametrized.idd(asl.stimulus_id))
+                        for asl in dsv.get_analysis_result()
+                    ]
+                )
+                # reconstruct stimulus
+                stimulus = stimuli[0]
+                if sheet == list(sheets_delay_dictionary.keys())[0]:
+                    stim = reconstruct_stimulus(stimulus)
+
+                # compute response
+                delay = sheets_delay_dictionary[sheet]
+                if time_window == None:
+                    time_window = stimulus.image_duration
+                signal = signals[0]
+                signal_arr = np.array(
+                    signal.duration.rescale(munits.sp / qt.ms).magnitude
+                )
+                signal_arr = np.sum(
+                    signal_arr[:, int(delay) : int(delay + time_window)], axis=-1
+                )
+                signal_arr = np.swapaxes(signal_arr, 0, 1)
+                resp_list_per_sheet.append(signal_arr)
+
+            stim_list.append(stimulus)
+            resp_list.append(np.concatenate(resp_list_per_sheet, axis=1))
+
+    stim_resp_dict = {
+        "stim": np.concatenate(stim_list),
+        "resp": np.concatenate(resp_list),
+    }
+    if output_file == None:
+        output_file = "StimRespExport.pickle"
+    with open(os.path.join(Global.root_directory, output_file), "wb") as f:
+        pickle.dump(stim_resp_dict, f)
+    return stim_resp_dict
+
+
 def ExportStimResp(datastore, sheets_delay_dictionary=None, time_window=None):
+    "export to pickle file"
+
     def reconstruct_sensory_stimulus(stim):
         images = []
         with open(stim.images_locations_file, "rb") as f:
@@ -74,6 +185,7 @@ def ExportStimResp(datastore, sheets_delay_dictionary=None, time_window=None):
         return np.array(images)
 
     if sheets_delay_dictionary == None:
+        # consider all sheets without any delay
         sheets_delay_dictionary = dict.fromkeys(datastore.sheets(), 0)
 
     assert all(sheet in datastore.sheets() for sheet in sheets_delay_dictionary.keys())
@@ -119,7 +231,7 @@ def ExportStimResp(datastore, sheets_delay_dictionary=None, time_window=None):
                     st_trial=trial,
                 )
 
-                PSTHlowmem(dsv, ParameterSet({"bin_length": 1.0})).perform_analysis()
+                PSTHLowRAM(dsv, ParameterSet({"bin_length": 1.0})).perform_analysis()
 
                 dsv = queries.param_filter_query(
                     datastore,
@@ -243,7 +355,11 @@ def ExportStimResp(datastore, sheets_delay_dictionary=None, time_window=None):
     return stim_resp_dict
 
 
-def ExportStimResp2(datastore, sheets_delay_dictionary=None, time_window=None):
+def ExportStimResp2(
+    datastore, sheets_delay_dictionary=None, time_window=None, output_file=None
+):
+    "export to pickle file responses"
+
     def reconstruct_sensory_stimulus(stim):
         images = []
         with open(stim.images_locations_file, "rb") as f:
@@ -298,14 +414,14 @@ def ExportStimResp2(datastore, sheets_delay_dictionary=None, time_window=None):
             ]
         )
     )
-
+    
     stim_list = []
     resp_list = []
 
     for trial in trials:
-
+        print(trial)
         for imgfile in imgfiles:
-
+        
             print("running psth on " + imgfile, flush=True)
             resp_imgfile_list = []
 
@@ -318,7 +434,7 @@ def ExportStimResp2(datastore, sheets_delay_dictionary=None, time_window=None):
                     st_images_locations_file=imgfile,
                     st_trial=trial,
                 )
-                PSTHlowmem(dsv, ParameterSet({"bin_length": 1.0})).perform_analysis()
+                PSTHLowRAM(dsv, ParameterSet({"bin_length": 1.0})).perform_analysis()
                 dsv = queries.param_filter_query(
                     datastore,
                     sheet_name=sheet,
@@ -326,8 +442,7 @@ def ExportStimResp2(datastore, sheets_delay_dictionary=None, time_window=None):
                     st_images_locations_file=imgfile,
                     st_trial=trial,
                 )
-                dsv.remove_ads_from_datastore()
-
+                print(dsv.get_analysis_result())
                 signals, stimuli = zip(
                     *[
                         (asl.asl, MozaikParametrized.idd(asl.stimulus_id))
@@ -378,7 +493,7 @@ def ExportStimResp2(datastore, sheets_delay_dictionary=None, time_window=None):
                 )
                 signals_arr = np.swapaxes(signals_arr, 0, 1)
                 resp_imgfile_list.append(signals_arr)
-
+                dsv.remove_ads_from_datastore()
             stim_list.append(sensory_stim)
             resp_list.append(np.concatenate(resp_imgfile_list, axis=1))
 
@@ -386,8 +501,290 @@ def ExportStimResp2(datastore, sheets_delay_dictionary=None, time_window=None):
         "stim": np.concatenate(stim_list),
         "resp": np.concatenate(resp_list),
     }
+    if output_file == None:
+        output_file = "StimRespExport.pickle"
+    with open(os.path.join(Global.root_directory, output_file), "wb") as f:
+        pickle.dump(stim_resp_dict, f)
 
-    with open(os.path.join(Global.root_directory, "StimRespExport.pickle"), "wb") as f:
+    return stim_resp_dict
+
+def ExportStimResp3(
+    datastore, sheets_delay_dictionary=None, time_window=None, output_file=None
+):
+    "export to pickle file responses"
+
+    def reconstruct_sensory_stimulus(stim):
+        images = []
+        with open(stim.images_locations_file, "rb") as f:
+            img_paths = pickle.load(f)
+        pattern_sampler = imagen.image.PatternSampler(
+            size_normalization="fit_longest",
+            whole_pattern_output_fns=[
+                mozaik.stimuli.vision.topographica_based.MaximumDynamicRange()
+            ],
+        )
+        for img_path in img_paths:
+            img = imagen.image.FileImage(
+                filename=img_path,
+                x=stim.location_x,
+                y=stim.location_y,
+                xdensity=stim.density,
+                ydensity=stim.density,
+                size=stim.size,
+                bounds=imagen.image.BoundingBox(
+                    points=(
+                        (-stim.size_x / 2, -stim.size_y / 2),
+                        (stim.size_x / 2, stim.size_y / 2),
+                    )
+                ),
+                scale=2 * stim.background_luminance,
+                pattern_sampler=pattern_sampler,
+            )()
+            images.append(img)
+        return np.array(images)
+
+    if sheets_delay_dictionary == None:
+        sheets_delay_dictionary = dict.fromkeys(datastore.sheets(), 0)
+    assert all(sheet in datastore.sheets() for sheet in sheets_delay_dictionary.keys())
+
+    imgfiles = list(
+        set(
+            [
+                MozaikParametrized.idd(s).images_locations_file
+                for s in queries.param_filter_query(
+                    datastore, st_name="ImagesSequence"
+                ).get_stimuli()
+            ]
+        )
+    )
+    
+    stim_list = []
+    resp_list = []
+
+    for imgfile in imgfiles:
+    
+        print("running psth on " + imgfile, flush=True)
+        resp_imgfile_list = []
+
+        for sheet in sheets_delay_dictionary.keys():
+
+            dsv = queries.param_filter_query(
+                datastore,
+                sheet_name=sheet,
+                st_name="ImagesSequence",
+                st_images_locations_file=imgfile,
+            )
+            PSTHLowRAM(dsv, ParameterSet({"bin_length": 1.0})).perform_analysis()
+            dsv = queries.param_filter_query(
+                datastore,
+                sheet_name=sheet,
+                st_name="ImagesSequence",
+                st_images_locations_file=imgfile,
+            )
+            print(dsv.get_analysis_result())
+            signals, stimuli = zip(
+                *[
+                    (asl.asl, MozaikParametrized.idd(asl.stimulus_id))
+                    for asl in dsv.get_analysis_result()
+                ]
+            )
+
+            # reconstruct the sensory stimulus()
+            if sheet == list(sheets_delay_dictionary.keys())[0]:
+                sensory_stim = np.array(
+                    [reconstruct_sensory_stimulus(stim) for stim in stimuli]
+                ).squeeze()
+
+            # slice psth results in dividing per image
+            delay = sheets_delay_dictionary[sheet]
+            if time_window == None:
+                time_window = stimuli[0].time_per_image
+
+            signals_arr = np.array(
+                [
+                    np.array(
+                        [
+                            np.reshape(
+                                s.rescale(munits.sp / qt.ms).magnitude,
+                                (
+                                    int(
+                                        s.duration.rescale(qt.ms)
+                                        / (
+                                            (
+                                                stim.time_per_image
+                                                + stim.time_per_blank
+                                            )
+                                            * qt.ms
+                                        )
+                                    ),
+                                    -1,
+                                ),
+                            )
+                            for s in sig
+                        ]
+                    )
+                    for sig, stim in zip(signals, stimuli)
+                ]
+            ).squeeze()
+            # slice according to sheet delay and time window and then sum to get num of spikes
+            signals_arr = np.sum(
+                signals_arr[:, :, int(delay) : int(delay + time_window)], axis=-1
+            )
+            signals_arr = np.swapaxes(signals_arr, 0, 1)
+            resp_imgfile_list.append(signals_arr)
+            dsv.remove_ads_from_datastore()
+        stim_list.append(sensory_stim)
+        resp_list.append(np.concatenate(resp_imgfile_list, axis=1))
+
+    stim_resp_dict = {
+        "stim": np.concatenate(stim_list),
+        "resp": np.concatenate(resp_list),
+    }
+    if output_file == None:
+        output_file = "StimRespExport.pickle"
+    with open(os.path.join(Global.root_directory, output_file), "wb") as f:
+        pickle.dump(stim_resp_dict, f)
+
+    return stim_resp_dict
+
+
+
+def ExportStimResp4(
+    datastore, sheets_delay_dictionary=None, time_window=None, output_file=None
+):
+    "export to pickle file responses"
+
+    def reconstruct_sensory_stimulus(stim):
+        images = []
+        with open(stim.images_locations_file, "rb") as f:
+            img_paths = pickle.load(f)
+        pattern_sampler = imagen.image.PatternSampler(
+            size_normalization="fit_longest",
+            whole_pattern_output_fns=[
+                mozaik.stimuli.vision.topographica_based.MaximumDynamicRange()
+            ],
+        )
+        for img_path in img_paths:
+            img = imagen.image.FileImage(
+                filename=img_path,
+                x=stim.location_x,
+                y=stim.location_y,
+                xdensity=stim.density,
+                ydensity=stim.density,
+                size=stim.size,
+                bounds=imagen.image.BoundingBox(
+                    points=(
+                        (-stim.size_x / 2, -stim.size_y / 2),
+                        (stim.size_x / 2, stim.size_y / 2),
+                    )
+                ),
+                scale=2 * stim.background_luminance,
+                pattern_sampler=pattern_sampler,
+            )()
+            images.append(img)
+        return np.array(images)
+
+    if sheets_delay_dictionary == None:
+        sheets_delay_dictionary = dict.fromkeys(datastore.sheets(), 0)
+    assert all(sheet in datastore.sheets() for sheet in sheets_delay_dictionary.keys())
+
+    imgfiles = list(
+        set(
+            [
+                MozaikParametrized.idd(s).images_locations_file
+                for s in queries.param_filter_query(
+                    datastore, st_name="ImagesSequence"
+                ).get_stimuli()
+            ]
+        )
+    )
+    
+    stim_list = []
+    resp_list = []
+
+    for imgfile in imgfiles:
+    
+        print("running psth on " + imgfile, flush=True)
+        resp_imgfile_list = []
+
+        for sheet in sheets_delay_dictionary.keys():
+            
+            dsv = queries.param_filter_query(
+                datastore,
+                sheet_name=sheet,
+                st_name="ImagesSequence",
+                st_images_locations_file=imgfile,
+            )
+            if dsv.get_analysis_results() == []:
+                PSTHLowRAM(dsv, ParameterSet({"bin_length": 1.0})).perform_analysis()
+                dsv = queries.param_filter_query(
+                    datastore,
+                    sheet_name=sheet,
+                    st_name="ImagesSequence",
+                    st_images_locations_file=imgfile,
+                )
+                print(dsv.get_analysis_result())
+            signals, stimuli = zip(
+                *[
+                    (asl.asl, MozaikParametrized.idd(asl.stimulus_id))
+                    for asl in dsv.get_analysis_result()
+                ]
+            )
+
+            # reconstruct the sensory stimulus()
+            if sheet == list(sheets_delay_dictionary.keys())[0]:
+                sensory_stim = np.array(
+                    [reconstruct_sensory_stimulus(stim) for stim in stimuli]
+                ).squeeze()
+
+            # slice psth results in dividing per image
+            delay = sheets_delay_dictionary[sheet]
+            if time_window == None:
+                time_window = stimuli[0].time_per_image
+
+            signals_arr = np.array(
+                [
+                    np.array(
+                        [
+                            np.reshape(
+                                s.rescale(munits.sp / qt.ms).magnitude,
+                                (
+                                    int(
+                                        s.duration.rescale(qt.ms)
+                                        / (
+                                            (
+                                                stim.time_per_image
+                                                + stim.time_per_blank
+                                            )
+                                            * qt.ms
+                                        )
+                                    ),
+                                    -1,
+                                ),
+                            )
+                            for s in sig
+                        ]
+                    )
+                    for sig, stim in zip(signals, stimuli)
+                ]
+            ).squeeze()
+            # slice according to sheet delay and time window and then sum to get num of spikes
+            signals_arr = np.sum(
+                signals_arr[:, :, int(delay) : int(delay + time_window)], axis=-1
+            )
+            signals_arr = np.swapaxes(signals_arr, 0, 1)
+            resp_imgfile_list.append(signals_arr)
+            dsv.remove_ads_from_datastore()
+        stim_list.append(sensory_stim)
+        resp_list.append(np.concatenate(resp_imgfile_list, axis=1))
+
+    stim_resp_dict = {
+        "stim": np.concatenate(stim_list),
+        "resp": np.concatenate(resp_list),
+    }
+    if output_file == None:
+        output_file = "StimRespExport.pickle"
+    with open(os.path.join(Global.root_directory, output_file), "wb") as f:
         pickle.dump(stim_resp_dict, f)
 
     return stim_resp_dict
@@ -430,7 +827,7 @@ def Export2Pandas(datastore, time_window, sheets_delay_dictionary=None):
     if sheets_delay_dictionary == None:
         sheets_delay_dictionary = dict.fromkeys(datastore.sheets(), 0)
     assert all(sheet in datastore.sheets() for sheet in sheets_delay_dictionary.keys())
-    
+
     imgfiles = list(
         set(
             [
@@ -453,7 +850,7 @@ def Export2Pandas(datastore, time_window, sheets_delay_dictionary=None):
             )
             seg = dsv.get_segment()[0]
             stim = MozaikParametrized.idd(dsv.get_stimuli()[0])
-            
+
             images_locations_file = stim.images_locations_file
             with open(images_locations_file, "rb") as f:
                 images_paths = pickle.load(f)
@@ -466,60 +863,3 @@ def Export2Pandas(datastore, time_window, sheets_delay_dictionary=None):
             dict_stim_resp[sheet] += resp
 
         dict_stim_resp["stim"] += reconstruct_sensory_stimuli_list(stim)
-
-
-# class StimRespToImageSequence(Analysis):
-#     """
-#     This analysis takes recording in DSV that has been done in response to stimuli type 'ImageSequence'
-#     and calculates the number of spikes elicited in responce to each image in the sequences.
-#     For each image presented it creates an AnalysisDataStructure instance, containing the number of spikes
-#     elicited in each neuron.
-#     """
-#     required_parameters = ParameterSet({
-#         'sheets_delays': dict,
-#     })
-
-#     def perform_analysis(self):
-
-#         img_list = []
-#         resp_list = []
-#         sheet_list = []
-
-#         sheets = self.parameters.sheets_delays.keys()
-#         delays  = list(self.parameters.sheets_delays.values())
-#         print(delays)
-#         time.sleep(0.5)
-#         assert all(sheet in self.datastore.sheets() for sheet in sheets), 'sheets provide' + \
-#                 'do not correspond to sheets in the model'
-#         assert all([type(delay) is float for delay in delays]), 'delays must be floats'
-
-#         for idx, sheet in enumerate(sheets):
-#             delay = delays[idx] * qt.ms
-#             dsv = queries.param_filter_query(self.datastore, st_name='ImagesSequence', sheet_name=sheet)
-
-#             for stim, seg in tqdm(zip(dsv.get_stimuli(), dsv.get_segments()),
-#                                   total=len(dsv.get_stimuli()),
-#                                   desc = sheet):
-#                 stimulus_id = MozaikParametrized.idd(stim)
-#                 time_per_image = stimulus_id.time_per_image * qt.ms
-#                 time_per_blank = stimulus_id.time_per_blank * qt.ms
-#                 time_sum = time_per_image + time_per_blank
-#                 images_locations_file = stimulus_id.images_locations_file
-#                 with open(images_locations_file, 'rb') as f:
-#                     images_paths = pickle.load(f)
-#                 for i, image_path in enumerate(images_paths):
-#                     start = delay + i*time_sum
-#                     stop = start + time_per_image
-#                     num_spikes = np.array(seg.mean_rates(start, stop)*time_per_image.rescale(qt.s)).round()
-
-
-#                     img_list.append(image_path)
-#                     resp_list.append(num_spikes)
-#                     sheet_list.append(sheet)
-
-#         img_resp_dict = {
-#             'image': img_list,
-#             'response': resp_list,
-#             'sheet': sheet_list
-#         }
-#         return img_resp_dict
