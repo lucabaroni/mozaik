@@ -52,6 +52,7 @@ class VisualExperiment(Experiment):
 
         if self.parameters.shuffle_stimuli:
             mozaik.rng.shuffle(self.stimuli)
+            logger.info(self.stimuli)
 
     def generate_stimuli(self):
         """
@@ -2144,8 +2145,7 @@ class MeasureNaturalImages(VisualExperiment):
         }
     )
 
-    def __init__(self, model, parameters):
-        VisualExperiment.__init__(self, model, parameters)
+    def generate_stimuli(self):
         img_paths = [
             os.path.join(self.parameters.images_dir, f)
             for f in os.listdir(self.parameters.images_dir)
@@ -2156,7 +2156,7 @@ class MeasureNaturalImages(VisualExperiment):
             + self.parameters.num_images
         ]
         for k in range(0, self.parameters.num_trials):
-            numpy.random.shuffle(img_paths)
+            # numpy.random.shuffle(img_paths)
             for img_path in img_paths:
                 self.stimuli.append(
                     topo.NaturalImage(
@@ -2164,10 +2164,9 @@ class MeasureNaturalImages(VisualExperiment):
                         image_path=img_path,
                         duration=self.parameters.duration,
                         image_duration=self.parameters.image_display_duration,
-                        blank_duration=self.parameters.duration
-                        - self.parameters.image_display_duration,
-                        size_x=model.visual_field.size_x,
-                        size_y=model.visual_field.size_y,
+                        blank_duration=self.parameters.duration - self.parameters.image_display_duration,
+                        size_x=self.model.visual_field.size_x,
+                        size_y=self.model.visual_field.size_y,
                         location_x=0.0,
                         location_y=0.0,
                         background_luminance=self.background_luminance,

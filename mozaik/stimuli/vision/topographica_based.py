@@ -21,6 +21,7 @@ from numpy import pi
 from quantities import Hz, rad, degrees, ms, dimensionless
 
 
+
 class TopographicaBasedVisualStimulus(VisualStimulus):
     """
     As we do not handle transparency in the Topographica stimuli (i.e. all pixels of all stimuli difned here will have 0% transparancy)
@@ -356,6 +357,7 @@ class MaximumDynamicRange(TransferFn):
         if ma-mi != 0:
                 x -= mi
                 x *= 1/(ma-mi)
+
 
 class NaturalImageWithEyeMovement(TopographicaBasedVisualStimulus):
     """
@@ -1441,10 +1443,10 @@ class NaturalImage(TopographicaBasedVisualStimulus):
 
     def frames(self):
         self.pattern_sampler = imagen.image.PatternSampler(
-            size_normalization="fit_longest",
+            size_normalization="fit_shortest",
             whole_pattern_output_fns=[MaximumDynamicRange()],
         )
-
+   
         img = imagen.image.FileImage(
             filename=self.image_path,
             x=0,
