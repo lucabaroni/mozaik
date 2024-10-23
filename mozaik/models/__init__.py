@@ -30,37 +30,43 @@ class Model(BaseComponent):
          The name of the model.
     
     results_dir : str
-                Path to a directory where to store the results.
+        Path to a directory where to store the results.
     
     reset : bool
-         If True the pyNN.reset() is used to reset the network between stimulus presentations. 
-         Otherwise a blank stimulus is shown for a period of time defined by the parameter null_stimulus_period.
+        If True the pyNN.reset() is used to reset the network between stimulus presentations. 
+        Otherwise a blank stimulus is shown for a period of time defined by the parameter null_stimulus_period.
+    
+    store_stimuli : bool
+        If True, the stimuli shown to the network are stored in the datastore.
+    
+    time_of_frame_to_store : int
+        The time of the frame to store in ms. If negative, all frames are stored.
     
     null_stimulus_period : float
-                         The length of blank stimulus presentation during the simulation.
+        The length of blank stimulus presentation during the simulation.
     
     input_space : ParameterSet
-                The parameters for the InputSpace object that will become the sensory input space for the model.
+        The parameters for the InputSpace object that will become the sensory input space for the model.
     
     sheets : ParameterSet
-                The list of sheets and their parameters from which the model is constructed. 
+        The list of sheets and their parameters from which the model is constructed. 
                 
     input_space_type : str
-                     The python class of the InputSpace object to use.
+        The python class of the InputSpace object to use.
                      
     min_delay : float (ms)
-                Minimum delay of connections allowed in the simulation. 
+        Minimum delay of connections allowed in the simulation. 
 
     max_delay : float (ms)
-                Maximum delay of connections allowed in the simulation. 
+        Maximum delay of connections allowed in the simulation. 
     
     time_step : float (ms)
-                Length of the single step of the simulation. 
+        Length of the single step of the simulation. 
 
     explosion_monitoring: ParameterSet
-                        Defines the sheet to monitor and the threshold of mean rate over which the activity is 
-                        considered too high and for which the simulation should be cancelled.
-                        None if no monitoring
+        Defines the sheet to monitor and the threshold of mean rate over which the activity is 
+        considered too high and for which the simulation should be cancelled.
+        None if no monitoring
     """
 
     required_parameters = ParameterSet({
