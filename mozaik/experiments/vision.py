@@ -2099,7 +2099,7 @@ class MapResponseToInterruptedCornerStimulus(VisualExperiment):
         pass
 
 
-class MeasureNaturalImages(VisualExperiment):
+class MeasureStaticImages(VisualExperiment):
     """
     Present a sequence of images loaded from a directory, in alphabetical order of
     image filenames, interleaved by blank stimulation.
@@ -2156,15 +2156,15 @@ class MeasureNaturalImages(VisualExperiment):
             + self.parameters.num_images
         ]
         for k in range(0, self.parameters.num_trials):
-            # numpy.random.shuffle(img_paths)
             for img_path in img_paths:
                 self.stimuli.append(
-                    topo.NaturalImage(
+                    topo.StaticImage(
                         frame_duration=self.frame_duration,
                         image_path=img_path,
                         duration=self.parameters.duration,
                         image_duration=self.parameters.image_display_duration,
-                        blank_duration=self.parameters.duration - self.parameters.image_display_duration,
+                        blank_duration=self.parameters.duration
+                        - self.parameters.image_display_duration,
                         size_x=self.model.visual_field.size_x,
                         size_y=self.model.visual_field.size_y,
                         location_x=0.0,
