@@ -103,9 +103,19 @@ def prepare_workflow(simulation_name, model_class):
         modified_parameters,
     ) = parse_workflow_args()
 
+    experiments_parameters = {}
+    model_modified_parameters = {}
+    for p in modified_parameters:
+        if p.startswith('experiments.'):
+            new_p = p[len('experiments.'):]  # Remove the 'experiments.' prefix
+            experiments_parameters[new_p] = modified_parameters[p]
+        else: 
+            model_modified_parameters[p] = modified_parameters[p]
+            
 
     # First we load the parameters just to retrieve seeds. We will throw them away, because at this stage the PyNNDistribution values were not yet initialized correctly.
-    parameters = load_parameters(parameters_url,modified_parameters)
+    parameters = load_parameters(parameters_url, model_modified_parameters)
+    assert 'experiments' not in parameters.keys(), "Error: do not use the keyword 'experiments' at the top level of model parameters. It is reserved for passing parameters to experiments."
     p=OrderedDict()
     if 'mozaik_seed' in parameters : p['mozaik_seed'] = parameters['mozaik_seed']
     if 'pynn_seed' in parameters : p['pynn_seed'] = parameters['pynn_seed']
@@ -116,15 +126,13 @@ def prepare_workflow(simulation_name, model_class):
 
     # Now really load parameters
     print("Loading parameters")
-    parameters = load_parameters(parameters_url,modified_parameters)
+    parameters = load_parameters(parameters_url, model_modified_parameters)
     print("Finished loading parameters")
 
     import pyNN.nest as sim
 
     # Create results directory
-    timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-
-    ddir  = result_directory_name(simulation_run_name,simulation_name,modified_parameters)
+    ddir  = result_directory_name(simulation_run_name,simulation_name, modified_parameters)
 
     if mozaik.mpi_comm and mozaik.mpi_comm.rank != mozaik.MPI_ROOT:
         Global.root_directory = parameters.results_dir + ddir + '/' + str(mozaik.mpi_comm.rank) + '/'
@@ -153,7 +161,7 @@ def prepare_workflow(simulation_name, model_class):
         f = open(Global.root_directory+"info","w")
         f.write(str({'model_class' : str(model_class), 'model_docstring' : model_class.__doc__,'simulation_run_name' : simulation_run_name, 'model_name' : simulation_name, 'creation_data' : datetime.now().strftime('%d/%m/%Y-%H:%M:%S')}))
         f.close()
-    return sim, num_threads, parameters
+    return sim, num_threads, parameters, experiments_parameters
 
 def run_workflow(simulation_name, model_class, create_experiments):
     """
@@ -179,11 +187,11 @@ def run_workflow(simulation_name, model_class, create_experiments):
     """
 
     # Prepare workflow - read parameters, setup logging, etc.
-    sim, num_threads, parameters = prepare_workflow(simulation_name, model_class)
+    sim, num_threads, parameters, experiments_parameters = prepare_workflow(simulation_name, model_class)
     # Prepare model to run experiments on
     model = model_class(sim,num_threads,parameters)
     # Run experiments with previously read parameters on the prepared model
-    data_store = run_experiments(model,create_experiments(model),parameters)
+    data_store = run_experiments(model,create_experiments(model,experiments_parameters),parameters)
 
     if mozaik.mpi_comm.rank == mozaik.MPI_ROOT:
         data_store.save()
@@ -240,7 +248,7 @@ def run_experiments(model,experiment_list,parameters,load_from=None):
     """
     
     # first lets run all the measurements required by the experiments
-    logger.info('Starting Experiemnts')
+    logger.info('Starting Experiments')
     if load_from == None:
         data_store = PickledDataStore(load=False,
                                       parameters=MozaikExtendedParameterSet({'root_directory': Global.root_directory,'store_stimuli' : parameters.store_stimuli}))
