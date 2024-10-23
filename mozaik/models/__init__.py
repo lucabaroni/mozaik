@@ -67,6 +67,7 @@ class Model(BaseComponent):
         'name': str,
         'results_dir': str,
         'store_stimuli' : bool,
+        'time_of_frame_to_store' : int,
         'reset': bool,
         'null_stimulus_period': float,
         'input_space': ParameterSet, # can be none - in which case input_space_type is ignored
