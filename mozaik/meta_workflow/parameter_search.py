@@ -363,3 +363,49 @@ def parameter_search_run_script_distributed_slurm_UK(simulation_name,master_resu
         print(p.communicate(input=data)[0])
         print(data)
         p.stdin.close()
+
+
+def parameter_search_run_script_distributed_slurm_UK_mpi(simulation_name,master_results_dir,run_script,core_number, env_path, nodes_to_exclude):
+    """
+    Scheadules the execution of *run_script*, one per each parameter combination of an existing parameter search run.
+    Each execution receives as the first commandline argument the directory in which the results for the given
+    parameter combination were stored.
+
+    Parameters
+    ----------
+    simulation_name : str
+                    The name of the simulation.
+    master_results_dir : str
+                    The directory where the parameter search results are stored.
+    un_script : str
+                    The name of the script to be run. The directory name of the given parameter combination datastore will be passed to it as the first command line argument.
+    core_number : int
+                How many cores to reserve per process.
+    """
+    f = open(master_results_dir+'/parameter_combinations','rb')
+    combinations = pickle.load(f)
+    f.close()
+
+    # first check whether all parameter combinations contain the same parameter names
+    assert len(set([tuple(set(comb.keys())) for comb in combinations])) == 1 , "The parameter search didn't occur over a fixed set of parameters"
+
+    from subprocess import Popen, PIPE, STDOUT
+    for i,combination in enumerate(combinations):
+        rdn = master_results_dir+'/'+result_directory_name('ParameterSearch',simulation_name,combination)
+        p = Popen(['sbatch'] +  ['-o',master_results_dir+"/slurm_analysis-%j.out" ],stdin=PIPE,stdout=PIPE,stderr=PIPE,text=True)
+
+        # THIS IS A BIT OF A HACK, have to add customization for other people ...
+        data = '\n'.join([
+                            '#!/bin/bash',
+                            '#SBATCH -J MozaikParamSearchAnalysis',
+                            '#SBATCH -c ' + str(1),
+                            '#SBATCH -x ' + nodes_to_exclude,
+                            '#SBATCH -n ' + str(core_number),
+                            '#SBATCH --hint=nomultithread',
+                            'source ' + env_path,
+                            'cd ' + os.getcwd(),
+                            ' '.join(["srun","--mpi=pmix_v3","python",run_script,"'"+rdn+"'"]  +['>']  + ["'"+rdn +'/OUTFILE_analysis'+str(time.time()) + "'"]),
+                        ])
+        print(p.communicate(input=data)[0])
+        print(data)
+        p.stdin.close()
