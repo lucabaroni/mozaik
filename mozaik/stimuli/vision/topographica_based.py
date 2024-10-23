@@ -1414,7 +1414,7 @@ class RadialGaborApparentMotion(GaborStimulus):
             yield (blank, [0])
 
 
-class NaturalImage(TopographicaBasedVisualStimulus):
+class StaticImage(TopographicaBasedVisualStimulus):
     """
     A visual stimulus consisting of a static image, followed by a blank screen
     with background luminance.
