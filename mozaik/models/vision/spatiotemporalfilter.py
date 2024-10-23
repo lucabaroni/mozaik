@@ -740,8 +740,6 @@ class SpatioTemporalFilterRetinaLGN(SensoryInputComponent):
         #import threading
         #def view_cell(cell):
         #    cell.view()
-
-
         if False:
             while t < duration:
                 t = visual_space.update()
@@ -755,22 +753,19 @@ class SpatioTemporalFilterRetinaLGN(SensoryInputComponent):
                     for t in threads:
                         t.join()
 
-
         while t < duration:
             t = visual_space.update()
             for rf_type in self.rf_types:
                 for cell in input_cells[rf_type]:
                     cell.view()
 
-
             if self.model.parameters.store_stimuli == True:
-                visual_region = VisualRegion(location_x=0, location_y=0,
-                                         size_x=self.model.visual_field.size_x,
-                                         size_y=self.model.visual_field.size_y)
-                im = visual_space.view(visual_region,pixel_size=self.rf["X_ON"].spatial_resolution)
-            else:
-                im = None
-            retinal_input.append(im)
+                if (self.model.parameters.time_of_frame_to_store >= t and self.model.parameters.time_of_frame_to_store < t + visual_space.update_interval) or self.model.parameters.time_of_frame_to_store < 0:
+                    visual_region = VisualRegion(location_x=0, location_y=0,
+                                            size_x=self.model.visual_field.size_x,
+                                            size_y=self.model.visual_field.size_y)
+                    im = visual_space.view(visual_region,pixel_size=self.rf["X_ON"].spatial_resolution)
+                    retinal_input.append(im)
 
         input_currents = OrderedDict()
         for rf_type in self.rf_types:
