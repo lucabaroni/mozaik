@@ -206,33 +206,13 @@ def run_workflow(simulation_name, model_class, create_experiments):
     model = model_class(sim,num_threads,parameters)
     # Run experiments with previously read parameters on the prepared model
     data_store = run_experiments(model,create_experiments(model,experiments_parameters),parameters)
-
+ 
     if mozaik.mpi_comm.rank == mozaik.MPI_ROOT:
         data_store.save()
     import resource
     print("Final memory usage: %iMB" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/(1024)))
     return (data_store, model)
 
-def run_workflow_with_exp_params(simulation_name, model_class, create_experiments, exp_params):
-    """
-    Hacky modifies version of run_workflow
-    """
-
-    # Prepare workflow - read parameters, setup logging, etc.
-    sim, num_threads, parameters = prepare_workflow(simulation_name, model_class)
-    if "baseline" in parameters.keys():
-        del parameters["baseline"]
-        
-    # Prepare model to run experiments on
-    model = model_class(sim,num_threads,parameters)
-    # Run experiments with previously read parameters on the prepared model
-    data_store = run_experiments(model,create_experiments(model, **exp_params),parameters)
-
-    if mozaik.mpi_comm.rank == 0:
-        data_store.save()
-    import resource
-    print("Final memory usage: %iMB" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/(1024)))
-    return (data_store, model)
 
 def run_experiments(model,experiment_list,parameters,load_from=None):
     """
