@@ -4,7 +4,7 @@ from mozaik.sheets.population_selector import RCRandomPercentage
 from parameters import ParameterSet
     
 
-def create_experiments(model):
+def create_experiments(model, experiment_parameters):
     
     return  [
                            #Lets kick the network up into activation
